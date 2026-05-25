@@ -1,0 +1,27 @@
+<nav class="navbar">
+  <div class="nav-inner">
+    <a href="/" class="nav-brand">
+      <img src="/images/logo.svg" alt="Ride Sharing System" height="32">
+    </a>
+    <div class="nav-links">
+      <% if (typeof user !== 'undefined' && user) { %>
+        <% if (user.Role === 'driver') { %>
+          <a href="/driver/dashboard" class="nav-link">Dashboard</a>
+        <% } else { %>
+          <a href="/passenger/dashboard" class="nav-link">Dashboard</a>
+        <% } %>
+        <a href="/reviews" class="nav-link">Reviews</a>
+        <span class="nav-user">
+          <span class="nav-user-dot"></span>
+          <%= user.Name %>
+        </span>
+        <form action="/auth/logout" method="POST" style="margin:0">
+          <button type="submit" class="btn-logout">Logout</button>
+        </form>
+      <% } else { %>
+        <a href="/auth/login" class="nav-link">Login</a>
+        <a href="/auth/register" class="btn btn-sm">Register</a>
+      <% } %>
+    </div>
+  </div>
+</nav>

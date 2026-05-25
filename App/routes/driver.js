@@ -13,11 +13,12 @@ router.get('/dashboard', requireRole('driver'), async (req, res) => {
        FROM RIDES r
        JOIN LOCATIONS o ON r.OriginID = o.LocationID
        JOIN LOCATIONS d ON r.DestinationID = d.LocationID
-       WHERE r.DriverID = ? ORDER BY r.DepartureTime DESC LIMIT 5`,
+       WHERE r.DriverID = ? ORDER BY r.DepartureTime DESC LIMIT 10`,
       [driverId]
     );
     const [vehicles] = await db.query('SELECT * FROM VEHICLES WHERE DriverID = ?', [driverId]);
-    res.render('driver-dashboard', { user: req.session.user, rides, vehicles });
+    const [locations] = await db.query('SELECT * FROM LOCATIONS ORDER BY City, LocationName');
+    res.render('driver-dashboard', { user: req.session.user, rides, vehicles, locations });
   } catch (err) {
     res.status(500).send(err.message);
   }

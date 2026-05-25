@@ -3,44 +3,80 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Reviews - Ride Sharing</title>
+  <title>Reviews - Ride Sharing System</title>
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>Ride Reviews</h1>
-      <a href="/">Home</a>
-    </header>
+
+  <%- include('partials/navbar') %>
+
+  <div class="page-wrapper">
+
+    <div class="page-header">
+      <h1>Driver Reviews</h1>
+      <p>Ratings and feedback from our community of drivers and passengers</p>
+    </div>
 
     <% if (reviews.length === 0) { %>
-      <p>No reviews yet.</p>
+      <div class="card">
+        <div class="empty-state" style="padding:60px 20px">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <p style="font-size:1rem;margin-top:8px">No reviews yet. Be the first to leave one!</p>
+        </div>
+      </div>
     <% } else { %>
-      <table>
-        <thead>
-          <tr>
-            <th>Passenger</th>
-            <th>Driver</th>
-            <th>Route</th>
-            <th>Rating</th>
-            <th>Comment</th>
-            <th>Date</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% reviews.forEach(r => { %>
-            <tr>
-              <td><%= r.PassengerName %></td>
-              <td><%= r.DriverName %></td>
-              <td><%= r.Origin %> → <%= r.Destination %></td>
-              <td><%= r.Rating %>/5</td>
-              <td><%= r.Comment || '-' %></td>
-              <td><%= new Date(r.ReviewDate).toLocaleDateString() %></td>
-            </tr>
-          <% }) %>
-        </tbody>
-      </table>
+
+      <!-- Summary bar -->
+      <div class="stats-grid" style="margin-bottom:28px">
+        <div class="stat-card">
+          <div class="stat-label">Total Reviews</div>
+          <div class="stat-value"><%= reviews.length %></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Average Rating</div>
+          <div class="stat-value yellow">
+            <%= (reviews.reduce((s,r) => s + r.Rating, 0) / reviews.length).toFixed(1) %>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">5-Star Reviews</div>
+          <div class="stat-value green"><%= reviews.filter(r => r.Rating === 5).length %></div>
+        </div>
+      </div>
+
+      <div class="reviews-list">
+        <% reviews.forEach(r => { %>
+          <div class="review-card">
+            <div class="review-header">
+              <div class="review-meta">
+                <div class="review-names">
+                  <strong><%= r.PassengerName %></strong>
+                  <span style="color:var(--gray-400);font-weight:400"> reviewed </span>
+                  <strong><%= r.DriverName %></strong>
+                </div>
+                <div class="review-route">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:middle"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  <%= r.Origin %> &rarr; <%= r.Destination %>
+                </div>
+                <div class="stars" style="margin-top:4px">
+                  <% for (let i = 1; i <= 5; i++) { %>
+                    <span class="star <%= i <= r.Rating ? 'filled' : '' %>">&#9733;</span>
+                  <% } %>
+                  <span style="font-size:0.78rem;color:var(--gray-500, var(--gray-600));margin-left:6px;font-weight:600"><%= r.Rating %>/5</span>
+                </div>
+              </div>
+              <div class="review-date"><%= new Date(r.ReviewDate).toLocaleDateString('en-PK', {dateStyle: 'medium'}) %></div>
+            </div>
+
+            <% if (r.Comment) { %>
+              <div class="review-comment">"<%= r.Comment %>"</div>
+            <% } %>
+          </div>
+        <% }) %>
+      </div>
+
     <% } %>
   </div>
+
 </body>
 </html>

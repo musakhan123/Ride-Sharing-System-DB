@@ -3,11 +3,85 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><%= title %></title>
+  <title>Ride Sharing System</title>
   <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .hero {
+      background: linear-gradient(135deg, var(--blue-900) 0%, var(--blue-600) 100%);
+      color: var(--white);
+      padding: 80px 24px;
+      text-align: center;
+    }
+    .hero h1 { font-size: 2.5rem; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 12px; }
+    .hero p  { font-size: 1.1rem; color: var(--blue-100); max-width: 520px; margin: 0 auto 32px; }
+    .hero-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .btn-hero-primary {
+      background: var(--white); color: var(--blue-800);
+      padding: 12px 28px; border-radius: var(--radius); font-weight: 700;
+      text-decoration: none; font-size: 0.95rem; transition: box-shadow 0.15s;
+    }
+    .btn-hero-primary:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
+    .btn-hero-outline {
+      background: transparent; color: var(--white);
+      border: 2px solid rgba(255,255,255,0.5);
+      padding: 12px 28px; border-radius: var(--radius); font-weight: 600;
+      text-decoration: none; font-size: 0.95rem; transition: background 0.15s;
+    }
+    .btn-hero-outline:hover { background: rgba(255,255,255,0.1); }
+    .features {
+      max-width: 1000px; margin: 60px auto; padding: 0 24px;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px;
+    }
+    .feature-card {
+      background: var(--white); border: 1px solid var(--gray-200);
+      border-radius: var(--radius-lg); padding: 28px 24px; text-align: center;
+      box-shadow: var(--shadow-sm);
+    }
+    .feature-icon {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: var(--blue-50); display: flex; align-items: center;
+      justify-content: center; margin: 0 auto 16px; color: var(--blue-600);
+    }
+    .feature-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 8px; color: var(--gray-900); }
+    .feature-card p  { font-size: 0.875rem; color: var(--gray-600); line-height: 1.6; }
+  </style>
 </head>
 <body>
-  <h1><%= title %></h1>
-  <p>Welcome to the Ride Sharing System.</p>
+
+  <%- include('partials/navbar') %>
+
+  <div class="hero">
+    <h1>Ride Sharing System</h1>
+    <p>Connect with drivers and passengers near you for safe, affordable, and convenient rides.</p>
+    <div class="hero-actions">
+      <a href="/auth/register" class="btn-hero-primary">Get Started</a>
+      <a href="/auth/login" class="btn-hero-outline">Sign In</a>
+    </div>
+  </div>
+
+  <div class="features">
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <h3>Trusted Community</h3>
+      <p>Registered drivers and passengers with verified profiles. Travel with people you can trust.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      </div>
+      <h3>Flexible Routes</h3>
+      <p>Find rides across multiple locations and cities. Go wherever you need to be.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      </div>
+      <h3>Verified Reviews</h3>
+      <p>Read ratings from real passengers before booking any ride.</p>
+    </div>
+  </div>
+
 </body>
 </html>

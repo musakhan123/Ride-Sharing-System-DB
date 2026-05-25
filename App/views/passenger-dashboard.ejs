@@ -3,70 +3,133 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Passenger Dashboard - Ride Sharing</title>
+  <title>Passenger Dashboard - Ride Sharing System</title>
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>Welcome, <%= user.Name %></h1>
-      <form action="/auth/logout" method="POST" style="display:inline">
-        <button type="submit">Logout</button>
-      </form>
-    </header>
 
-    <section>
-      <h2>Search Rides</h2>
-      <form action="/passenger/rides/search" method="GET">
-        <div class="form-group">
-          <label>From</label>
-          <select name="originId" required>
-            <option value="">Select origin</option>
-            <% locations.forEach(l => { %>
-              <option value="<%= l.LocationID %>"><%= l.LocationName %>, <%= l.City %></option>
-            <% }) %>
-          </select>
+  <%- include('partials/navbar') %>
+
+  <div class="page-wrapper">
+
+    <div class="page-header">
+      <h1>Passenger Dashboard</h1>
+      <p>Find and book rides, <%= user.Name %></p>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Bookings</div>
+        <div class="stat-value"><%= bookings.length %></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Confirmed</div>
+        <div class="stat-value green"><%= bookings.filter(b => b.BookingStatus === 'confirmed').length %></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Cancelled</div>
+        <div class="stat-value" style="color:var(--red)"><%= bookings.filter(b => b.BookingStatus === 'cancelled').length %></div>
+      </div>
+    </div>
+
+    <div class="dashboard-grid">
+
+      <!-- Search Rides -->
+      <div class="card">
+        <div class="card-header">
+          <h2>Search Available Rides</h2>
+          <div class="card-header-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </div>
         </div>
-        <div class="form-group">
-          <label>To</label>
-          <select name="destinationId" required>
-            <option value="">Select destination</option>
-            <% locations.forEach(l => { %>
-              <option value="<%= l.LocationID %>"><%= l.LocationName %>, <%= l.City %></option>
-            <% }) %>
-          </select>
+        <div class="card-body">
+          <form action="/passenger/rides/search" method="GET">
+            <div style="display:flex;flex-direction:column;gap:14px;">
+              <div class="form-group">
+                <label>From</label>
+                <select name="originId" required>
+                  <option value="">Select pickup location</option>
+                  <% locations.forEach(l => { %>
+                    <option value="<%= l.LocationID %>"><%= l.LocationName %>, <%= l.City %></option>
+                  <% }) %>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>To</label>
+                <select name="destinationId" required>
+                  <option value="">Select destination</option>
+                  <% locations.forEach(l => { %>
+                    <option value="<%= l.LocationID %>"><%= l.LocationName %>, <%= l.City %></option>
+                  <% }) %>
+                </select>
+              </div>
+              <button type="submit" class="btn btn-primary">Search Rides</button>
+            </div>
+          </form>
         </div>
-        <button type="submit">Search</button>
-      </form>
-    </section>
+      </div>
 
-    <section>
-      <h2>My Recent Bookings</h2>
-      <% if (bookings.length === 0) { %>
-        <p>No bookings yet.</p>
-      <% } else { %>
-        <table>
-          <thead>
-            <tr>
-              <th>From</th><th>To</th><th>Departure</th><th>Driver</th><th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% bookings.forEach(b => { %>
-              <tr>
-                <td><%= b.Origin %></td>
-                <td><%= b.Destination %></td>
-                <td><%= new Date(b.DepartureTime).toLocaleString() %></td>
-                <td><%= b.DriverName %></td>
-                <td><%= b.BookingStatus %></td>
-              </tr>
-            <% }) %>
-          </tbody>
-        </table>
-      <% } %>
-    </section>
+      <!-- Quick Links -->
+      <div class="card">
+        <div class="card-header">
+          <h2>Quick Actions</h2>
+        </div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
+          <a href="/reviews" class="btn btn-secondary" style="justify-content:flex-start;gap:10px">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            View All Reviews
+          </a>
+          <a href="/passenger/bookings" class="btn btn-secondary" style="justify-content:flex-start;gap:10px">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            All My Bookings
+          </a>
+        </div>
+      </div>
 
-    <p><a href="/reviews">View All Reviews</a></p>
+      <!-- Recent Bookings -->
+      <div class="card full-width">
+        <div class="card-header">
+          <h2>Recent Bookings</h2>
+          <span style="font-size:0.8rem;color:var(--gray-400)">Last 5 bookings</span>
+        </div>
+        <% if (bookings.length === 0) { %>
+          <div class="empty-state">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <p>No bookings yet. Search for a ride above to get started.</p>
+          </div>
+        <% } else { %>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>From</th>
+                  <th>To</th>
+                  <th>Departure</th>
+                  <th>Driver</th>
+                  <th>Booked At</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% bookings.forEach(b => { %>
+                  <tr>
+                    <td><%= b.Origin %></td>
+                    <td><%= b.Destination %></td>
+                    <td><%= new Date(b.DepartureTime).toLocaleString('en-PK', {dateStyle:'medium', timeStyle:'short'}) %></td>
+                    <td><%= b.DriverName %></td>
+                    <td style="color:var(--gray-500, var(--gray-600));font-size:0.8rem"><%= new Date(b.BookingTime).toLocaleDateString('en-PK', {dateStyle:'medium'}) %></td>
+                    <td><span class="badge badge-<%= b.BookingStatus %>"><%= b.BookingStatus %></span></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+
+    </div>
   </div>
+
 </body>
 </html>

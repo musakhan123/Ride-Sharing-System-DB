@@ -3,30 +3,51 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login - Ride Sharing</title>
+  <title>Login - Ride Sharing System</title>
   <link rel="stylesheet" href="/css/style.css">
 </head>
-<body>
-  <div class="container">
-    <h1>Login</h1>
+<body class="auth-page">
+
+  <a href="/" class="auth-brand">
+    <img src="/images/logo.svg" alt="Ride Sharing System" height="38">
+  </a>
+
+  <div class="auth-card">
+    <h2>Welcome back</h2>
+    <p class="auth-subtitle">Sign in to your account to continue</p>
+
+    <% if (success) { %>
+      <div class="alert alert-success">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        <%= success %>
+      </div>
+    <% } %>
 
     <% if (error) { %>
-      <p class="error"><%= error %></p>
+      <div class="alert alert-error">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <%= error %>
+      </div>
     <% } %>
 
     <form action="/auth/login" method="POST">
-      <div class="form-group">
-        <label for="email">Email</label>
-        <input type="email" id="email" name="email" required>
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div class="form-group">
+          <label for="email">Email address</label>
+          <input type="email" id="email" name="email" placeholder="you@example.com" required autofocus>
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" placeholder="Enter your password" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="margin-top:4px">Sign in</button>
       </div>
-      <div class="form-group">
-        <label for="password">Password</label>
-        <input type="password" id="password" name="password" required>
-      </div>
-      <button type="submit">Login</button>
     </form>
-
-    <p>Don't have an account? <a href="/auth/register">Register</a></p>
   </div>
+
+  <p class="auth-footer">
+    Don't have an account? <a href="/auth/register">Create one</a>
+  </p>
+
 </body>
 </html>
