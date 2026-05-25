@@ -24,7 +24,16 @@ app.use(session({
 
 // Routes
 const indexRouter = require('./routes/index');
+const authRouter = require('./routes/auth');
+const driverRouter = require('./routes/driver');
+const passengerRouter = require('./routes/passenger');
+const reviewsRouter = require('./routes/reviews');
+
 app.use('/', indexRouter);
+app.use('/auth', authRouter);
+app.use('/driver', driverRouter);
+app.use('/passenger', passengerRouter);
+app.use('/reviews', reviewsRouter);
 
 db.getConnection()
   .then(conn => {
