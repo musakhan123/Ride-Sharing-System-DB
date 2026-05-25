@@ -5,6 +5,137 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Panel - Ride Sharing System</title>
   <link rel="stylesheet" href="/css/style.css">
+  <style>
+    /* ── Tab bar ─────────────────────────────────────────────────── */
+    .tab-bar {
+      display: flex;
+      gap: 4px;
+      background: var(--gray-100);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      padding: 5px;
+      margin-bottom: 28px;
+      width: fit-content;
+    }
+    .tab-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 20px;
+      border-radius: var(--radius);
+      border: none;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+      color: var(--gray-500);
+      background: transparent;
+      white-space: nowrap;
+    }
+    .tab-btn .tab-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 6px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      background: var(--gray-200);
+      color: var(--gray-500);
+      transition: background 0.15s, color 0.15s;
+    }
+    .tab-btn.active {
+      background: var(--blue-600);
+      color: var(--white);
+      box-shadow: 0 1px 4px rgba(37,99,235,0.25);
+    }
+    .tab-btn.active .tab-count {
+      background: rgba(255,255,255,0.25);
+      color: var(--white);
+    }
+    .tab-btn:not(.active):hover {
+      background: var(--white);
+      color: var(--gray-700);
+    }
+
+    /* ── Tab panels ──────────────────────────────────────────────── */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Section heading ─────────────────────────────────────────── */
+    .section-heading {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .section-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .section-icon.blue  { background: var(--blue-50);  color: var(--blue-600); }
+    .section-icon.green { background: #d1fae5; color: #059669; }
+    .section-heading h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin: 0;
+    }
+    .section-heading p {
+      font-size: 0.78rem;
+      color: var(--gray-500);
+      margin: 3px 0 0;
+    }
+    .section-meta {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ── Card ────────────────────────────────────────────────────── */
+    .admin-card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    /* ── Action button groups ────────────────────────────────────── */
+    .action-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      align-items: flex-start;
+    }
+    .action-group-row {
+      display: flex;
+      gap: 5px;
+    }
+    .reject-form {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin: 0;
+    }
+    .reject-reason {
+      font-size: 0.73rem;
+      padding: 4px 7px;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      color: var(--gray-800);
+      width: 155px;
+      background: var(--white);
+    }
+  </style>
 </head>
 <body>
 
@@ -12,31 +143,31 @@
 
   <div class="page-wrapper">
 
-    <!-- Page header -->
+    <!-- ── Page header ───────────────────────────────────────────── -->
     <div class="page-header">
       <div style="display:flex;align-items:center;gap:10px">
         <h1>Admin Panel</h1>
         <span class="badge badge-driver" style="font-size:0.68rem;letter-spacing:0.8px;padding:3px 8px">ADMIN</span>
       </div>
-      <p>Review pending identity verifications and vehicle registrations.</p>
+      <p>Review and manage identity verifications and vehicle registrations.</p>
     </div>
 
-    <!-- Stats row -->
-    <div class="stats-grid">
+    <!-- ── Stats ─────────────────────────────────────────────────── -->
+    <div class="stats-grid" style="margin-bottom:32px">
       <div class="stat-card">
         <div class="stat-label">Pending ID Verifications</div>
         <div class="stat-value yellow">
-          <%= identityVerifications.filter(iv => iv.Status === 'pending').length %>
+          <%= identityVerifications.filter(function(iv){ return iv.Status === 'pending'; }).length %>
         </div>
       </div>
       <div class="stat-card">
         <div class="stat-label">Pending Vehicle Regs</div>
         <div class="stat-value yellow">
-          <%= vehicleRegistrations.filter(vr => vr.Status === 'pending').length %>
+          <%= vehicleRegistrations.filter(function(vr){ return vr.Status === 'pending'; }).length %>
         </div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Total Verifications</div>
+        <div class="stat-label">Total ID Verifications</div>
         <div class="stat-value"><%= identityVerifications.length %></div>
       </div>
       <div class="stat-card">
@@ -45,62 +176,94 @@
       </div>
     </div>
 
-    <!-- ── Identity Verifications ─────────────────────────────────── -->
-    <div class="card" style="margin-bottom:24px" id="verifications">
-      <div class="card-header">
-        <h2>Identity Verifications</h2>
-        <div style="display:flex;align-items:center;gap:10px">
-          <% const pendingIV = identityVerifications.filter(iv => iv.Status === 'pending').length; %>
-          <% if (pendingIV > 0) { %>
-            <span class="badge badge-pending"><%= pendingIV %> pending</span>
-          <% } %>
-          <span style="font-size:0.8rem;color:var(--gray-400)"><%= identityVerifications.length %> total</span>
-        </div>
-      </div>
+    <!-- ── Tab bar ───────────────────────────────────────────────── -->
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="showTab('verifications', this)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+        </svg>
+        Identity Verifications
+        <span class="tab-count"><%= identityVerifications.filter(function(iv){ return iv.Status === 'pending'; }).length %></span>
+      </button>
+      <button class="tab-btn" onclick="showTab('vehicles', this)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <rect x="1" y="3" width="15" height="13" rx="2"/>
+          <path d="M16 8h4l3 5v3h-7V8z"/>
+          <circle cx="5.5" cy="18.5" r="2.5"/>
+          <circle cx="18.5" cy="18.5" r="2.5"/>
+        </svg>
+        Vehicle Registrations
+        <span class="tab-count"><%= vehicleRegistrations.filter(function(vr){ return vr.Status === 'pending'; }).length %></span>
+      </button>
+    </div>
 
-      <% if (identityVerifications.length === 0) { %>
-        <div class="empty-state">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         TAB 1 — IDENTITY VERIFICATIONS
+         ═══════════════════════════════════════════════════════════════ -->
+    <div id="tab-verifications" class="tab-panel active">
+
+      <div class="section-heading">
+        <div class="section-icon blue">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
             <polyline points="14 2 14 8 20 8"/>
             <line x1="16" y1="13" x2="8" y2="13"/>
             <line x1="16" y1="17" x2="8" y2="17"/>
           </svg>
-          <p>No verification requests yet.</p>
         </div>
-      <% } else { %>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>User</th>
-                <th>Document Type</th>
-                <th>Document Number</th>
-                <th>Document Image</th>
-                <th>Submitted</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <% identityVerifications.forEach(iv => { %>
-                <% const ext = iv.DocumentFile ? iv.DocumentFile.split('.').pop().toLowerCase() : ''; %>
-                <tr style="<%= iv.Status === 'pending' ? 'background:var(--blue-50)' : '' %>">
+        <div>
+          <h2>Identity Verifications</h2>
+          <p>Approve, reject, or suspend submitted identity documents.</p>
+        </div>
+        <div class="section-meta">
+          <% var pendingIV = identityVerifications.filter(function(iv){ return iv.Status === 'pending'; }).length; %>
+          <% if (pendingIV > 0) { %><span class="badge badge-pending"><%= pendingIV %> pending</span><% } %>
+          <span style="font-size:0.78rem;color:var(--gray-400)"><%= identityVerifications.length %> total</span>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <% if (identityVerifications.length === 0) { %>
+          <div class="empty-state">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+            <p>No identity verification requests yet.</p>
+          </div>
+        <% } else { %>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Name</th>
+                  <th>Document Type</th>
+                  <th>Document Number</th>
+                  <th>Document Image</th>
+                  <th>Submitted</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% for (var i = 0; i < identityVerifications.length; i++) { %>
+                <% var iv = identityVerifications[i]; %>
+                <tr style="<%= iv.Status === 'pending' ? 'background:var(--blue-50)' : iv.Status === 'suspended' ? 'background:#fff7ed' : '' %>">
 
                   <td style="color:var(--gray-400);font-size:0.78rem">#<%= iv.VerificationID %></td>
 
                   <td>
-                    <div style="font-weight:600;color:var(--gray-900);font-size:0.875rem;white-space:nowrap">
-                      <%= iv.UserName %>
-                    </div>
-                    <div style="font-size:0.75rem;color:var(--gray-600)"><%= iv.Email %></div>
+                    <div style="font-weight:600;color:var(--gray-900);font-size:0.875rem;white-space:nowrap"><%= iv.UserName %></div>
+                    <div style="font-size:0.75rem;color:var(--gray-500)"><%= iv.Email %></div>
                   </td>
 
-                  <td>
-                    <span style="text-transform:capitalize;font-size:0.85rem">
-                      <%= iv.DocumentType.replace('_', ' ') %>
-                    </span>
+                  <td style="text-transform:capitalize;font-size:0.85rem;color:var(--gray-700)">
+                    <%= iv.DocumentType.replace(/_/g, ' ') %>
                   </td>
 
                   <td>
@@ -111,27 +274,19 @@
 
                   <td>
                     <% if (iv.DocumentFile) { %>
-                      <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-start">
-                        <% if (['jpg','jpeg','png'].includes(ext)) { %>
+                      <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start">
+                        <% if (['jpg','jpeg','png'].indexOf(iv.DocumentFile.split('.').pop().toLowerCase()) !== -1) { %>
                           <img src="/uploads/<%= iv.DocumentFile %>"
-                               style="width:60px;height:44px;object-fit:cover;border-radius:4px;border:1px solid var(--gray-200);display:block"
-                               alt="Document">
+                               style="width:64px;height:46px;object-fit:cover;border-radius:5px;border:1px solid var(--gray-200);display:block"
+                               alt="ID document">
                         <% } else { %>
-                          <div style="display:flex;align-items:center;gap:4px;color:var(--gray-500);font-size:0.78rem">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                              <polyline points="14 2 14 8 20 8"/>
-                            </svg>
-                            PDF file
-                          </div>
+                          <span style="font-size:0.78rem;color:var(--gray-500)">PDF file</span>
                         <% } %>
                         <a href="/uploads/<%= iv.DocumentFile %>" target="_blank"
-                           style="font-size:0.75rem;color:var(--blue-600);font-weight:500;text-decoration:none;white-space:nowrap">
-                          View Document ↗
-                        </a>
+                           style="font-size:0.73rem;color:var(--blue-600);font-weight:500;text-decoration:none;white-space:nowrap">View ↗</a>
                       </div>
                     <% } else { %>
-                      <span style="color:var(--gray-400);font-size:0.8rem">—</span>
+                      <span style="color:var(--gray-300)">—</span>
                     <% } %>
                   </td>
 
@@ -144,107 +299,155 @@
                       <span class="badge badge-active">Verified</span>
                     <% } else if (iv.Status === 'pending') { %>
                       <span class="badge badge-pending">Pending</span>
+                    <% } else if (iv.Status === 'suspended') { %>
+                      <span class="badge badge-suspended">Suspended</span>
                     <% } else { %>
                       <span class="badge badge-cancelled">Rejected</span>
                     <% } %>
                   </td>
 
+                  <!-- Actions: differ by current status -->
                   <td>
                     <% if (iv.Status === 'pending') { %>
-                      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-start">
+                      <div class="action-group">
                         <form action="/admin/verify/<%= iv.VerificationID %>" method="POST" style="margin:0">
                           <input type="hidden" name="action" value="approve">
                           <button type="submit" class="btn btn-success btn-sm">Approve</button>
                         </form>
-                        <form action="/admin/verify/<%= iv.VerificationID %>" method="POST"
-                              style="margin:0;display:flex;flex-direction:column;gap:4px">
+                        <form action="/admin/verify/<%= iv.VerificationID %>" method="POST" style="margin:0">
+                          <input type="hidden" name="action" value="suspend">
+                          <button type="submit" class="btn btn-warning btn-sm">Suspend</button>
+                        </form>
+                        <form action="/admin/verify/<%= iv.VerificationID %>" method="POST" class="reject-form">
                           <input type="hidden" name="action" value="reject">
-                          <input type="text" name="reason" placeholder="Rejection reason (optional)"
-                                 style="font-size:0.73rem;padding:4px 7px;border:1px solid var(--gray-200);border-radius:var(--radius);color:var(--gray-800);width:170px;background:var(--white)">
+                          <input type="text" name="reason" placeholder="Reason (optional)" class="reject-reason">
                           <button type="submit" class="btn btn-danger btn-sm">Reject</button>
                         </form>
                       </div>
+
+                    <% } else if (iv.Status === 'verified') { %>
+                      <div class="action-group-row">
+                        <form action="/admin/verify/<%= iv.VerificationID %>" method="POST" style="margin:0">
+                          <input type="hidden" name="action" value="suspend">
+                          <button type="submit" class="btn btn-warning btn-sm">Suspend</button>
+                        </form>
+                        <form action="/admin/verify/<%= iv.VerificationID %>" method="POST" style="margin:0">
+                          <input type="hidden" name="action" value="reject">
+                          <button type="submit" class="btn btn-danger btn-sm">Reject</button>
+                        </form>
+                      </div>
+
+                    <% } else if (iv.Status === 'suspended') { %>
+                      <div class="action-group-row">
+                        <form action="/admin/unsuspend-identity/<%= iv.VerificationID %>" method="POST" style="margin:0">
+                          <button type="submit" class="btn btn-success btn-sm">Unsuspend</button>
+                        </form>
+                        <form action="/admin/verify/<%= iv.VerificationID %>" method="POST" style="margin:0">
+                          <input type="hidden" name="action" value="reject">
+                          <button type="submit" class="btn btn-danger btn-sm">Reject</button>
+                        </form>
+                      </div>
+
+                    <% } else if (iv.Status === 'rejected') { %>
+                      <form action="/admin/verify/<%= iv.VerificationID %>" method="POST" style="margin:0">
+                        <input type="hidden" name="action" value="approve">
+                        <button type="submit" class="btn btn-success btn-sm">Approve</button>
+                      </form>
+
                     <% } else { %>
-                      <span style="color:var(--gray-400);font-size:0.8rem">—</span>
+                      <span style="color:var(--gray-300)">—</span>
                     <% } %>
                   </td>
 
                 </tr>
-              <% }) %>
-            </tbody>
-          </table>
-        </div>
-      <% } %>
-    </div>
-
-    <!-- ── Vehicle Registrations ──────────────────────────────────── -->
-    <div class="card" id="vehicles">
-      <div class="card-header">
-        <h2>Vehicle Registrations</h2>
-        <div style="display:flex;align-items:center;gap:10px">
-          <% const pendingVR = vehicleRegistrations.filter(vr => vr.Status === 'pending').length; %>
-          <% if (pendingVR > 0) { %>
-            <span class="badge badge-pending"><%= pendingVR %> pending</span>
-          <% } %>
-          <span style="font-size:0.8rem;color:var(--gray-400)"><%= vehicleRegistrations.length %> total</span>
-        </div>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
       </div>
 
-      <% if (vehicleRegistrations.length === 0) { %>
-        <div class="empty-state">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+    </div><!-- /tab-verifications -->
+
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         TAB 2 — VEHICLE REGISTRATIONS
+         ═══════════════════════════════════════════════════════════════ -->
+    <div id="tab-vehicles" class="tab-panel">
+
+      <div class="section-heading">
+        <div class="section-icon green">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="1" y="3" width="15" height="13" rx="2"/>
             <path d="M16 8h4l3 5v3h-7V8z"/>
             <circle cx="5.5" cy="18.5" r="2.5"/>
             <circle cx="18.5" cy="18.5" r="2.5"/>
           </svg>
-          <p>No vehicle registrations yet.</p>
         </div>
-      <% } else { %>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Driver</th>
-                <th>Vehicle</th>
-                <th>Plate Number</th>
-                <th>Reg. Number</th>
-                <th>Expiry Date</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <% vehicleRegistrations.forEach(vr => { %>
-                <tr style="<%= vr.Status === 'pending' ? 'background:var(--blue-50)' : '' %>">
+        <div>
+          <h2>Vehicle Registrations</h2>
+          <p>Approve, reject, or suspend submitted vehicle registration certificates.</p>
+        </div>
+        <div class="section-meta">
+          <% var pendingVR = vehicleRegistrations.filter(function(vr){ return vr.Status === 'pending'; }).length; %>
+          <% if (pendingVR > 0) { %><span class="badge badge-pending"><%= pendingVR %> pending</span><% } %>
+          <span style="font-size:0.78rem;color:var(--gray-400)"><%= vehicleRegistrations.length %> total</span>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <% if (vehicleRegistrations.length === 0) { %>
+          <div class="empty-state">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="1" y="3" width="15" height="13" rx="2"/>
+              <path d="M16 8h4l3 5v3h-7V8z"/>
+              <circle cx="5.5" cy="18.5" r="2.5"/>
+              <circle cx="18.5" cy="18.5" r="2.5"/>
+            </svg>
+            <p>No vehicle registrations yet.</p>
+          </div>
+        <% } else { %>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Driver Name</th>
+                  <th>Make</th>
+                  <th>Model</th>
+                  <th>Plate Number</th>
+                  <th>Registration Number</th>
+                  <th>Expiry Date</th>
+                  <th>Document Image</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% for (var j = 0; j < vehicleRegistrations.length; j++) { %>
+                <% var vr = vehicleRegistrations[j]; %>
+                <tr style="<%= vr.Status === 'pending' ? 'background:var(--blue-50)' : vr.Status === 'suspended' ? 'background:#fff7ed' : '' %>">
 
                   <td style="color:var(--gray-400);font-size:0.78rem">#<%= vr.RegistrationID %></td>
 
                   <td>
-                    <div style="font-weight:600;color:var(--gray-900);font-size:0.875rem;white-space:nowrap">
-                      <%= vr.DriverName %>
-                    </div>
-                    <div style="font-size:0.75rem;color:var(--gray-600)"><%= vr.DriverEmail %></div>
+                    <div style="font-weight:600;color:var(--gray-900);font-size:0.875rem;white-space:nowrap"><%= vr.DriverName %></div>
+                    <div style="font-size:0.75rem;color:var(--gray-500)"><%= vr.DriverEmail %></div>
+                  </td>
+
+                  <td style="font-weight:600;color:var(--gray-800);font-size:0.875rem"><%= vr.Make %></td>
+
+                  <td>
+                    <div style="font-size:0.875rem;color:var(--gray-700)"><%= vr.Model %></div>
+                    <div style="font-size:0.75rem;color:var(--gray-500)"><%= vr.Color %></div>
                   </td>
 
                   <td>
-                    <div style="font-size:0.875rem;color:var(--gray-900)">
-                      <strong><%= vr.Make %></strong> <%= vr.Model %>
-                    </div>
-                    <div style="font-size:0.75rem;color:var(--gray-600)"><%= vr.Color %></div>
+                    <code style="background:var(--gray-100);padding:2px 7px;border-radius:4px;font-size:0.78rem"><%= vr.PlateNumber %></code>
                   </td>
 
                   <td>
-                    <code style="background:var(--gray-100);padding:2px 7px;border-radius:4px;font-size:0.78rem">
-                      <%= vr.PlateNumber %>
-                    </code>
-                  </td>
-
-                  <td>
-                    <code style="background:var(--gray-100);padding:2px 7px;border-radius:4px;font-size:0.78rem">
-                      <%= vr.RegistrationNumber %>
-                    </code>
+                    <code style="background:var(--gray-100);padding:2px 7px;border-radius:4px;font-size:0.78rem"><%= vr.RegistrationNumber %></code>
                   </td>
 
                   <td style="font-size:0.8rem;color:var(--gray-600);white-space:nowrap">
@@ -252,43 +455,109 @@
                   </td>
 
                   <td>
-                    <% if (vr.Status === 'active') { %>
-                      <span class="badge badge-active">Active</span>
-                    <% } else if (vr.Status === 'pending') { %>
-                      <span class="badge badge-pending">Pending</span>
-                    <% } else if (vr.Status === 'expired') { %>
-                      <span class="badge badge-cancelled">Expired</span>
+                    <% if (vr.DocumentFile) { %>
+                      <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start">
+                        <% if (['jpg','jpeg','png'].indexOf(vr.DocumentFile.split('.').pop().toLowerCase()) !== -1) { %>
+                          <img src="/uploads/<%= vr.DocumentFile %>"
+                               style="width:64px;height:46px;object-fit:cover;border-radius:5px;border:1px solid var(--gray-200);display:block"
+                               alt="Reg doc">
+                        <% } else { %>
+                          <span style="font-size:0.78rem;color:var(--gray-500)">PDF file</span>
+                        <% } %>
+                        <a href="/uploads/<%= vr.DocumentFile %>" target="_blank"
+                           style="font-size:0.73rem;color:var(--blue-600);font-weight:500;text-decoration:none;white-space:nowrap">View ↗</a>
+                      </div>
                     <% } else { %>
-                      <span class="badge badge-cancelled">Suspended</span>
+                      <span style="color:var(--gray-300)">—</span>
                     <% } %>
                   </td>
 
                   <td>
+                    <% if (vr.Status === 'active') { %>
+                      <span class="badge badge-active">Active</span>
+                    <% } else if (vr.Status === 'pending') { %>
+                      <span class="badge badge-pending">Pending</span>
+                    <% } else if (vr.Status === 'suspended') { %>
+                      <span class="badge badge-suspended">Suspended</span>
+                    <% } else if (vr.Status === 'rejected') { %>
+                      <span class="badge badge-cancelled">Rejected</span>
+                    <% } else { %>
+                      <span class="badge badge-cancelled">Expired</span>
+                    <% } %>
+                  </td>
+
+                  <!-- Actions: differ by current status -->
+                  <td>
                     <% if (vr.Status === 'pending') { %>
-                      <div style="display:flex;gap:6px">
+                      <div class="action-group">
                         <form action="/admin/vehicle/<%= vr.RegistrationID %>" method="POST" style="margin:0">
                           <input type="hidden" name="action" value="approve">
                           <button type="submit" class="btn btn-success btn-sm">Approve</button>
+                        </form>
+                        <form action="/admin/vehicle/<%= vr.RegistrationID %>" method="POST" style="margin:0">
+                          <input type="hidden" name="action" value="suspend">
+                          <button type="submit" class="btn btn-warning btn-sm">Suspend</button>
                         </form>
                         <form action="/admin/vehicle/<%= vr.RegistrationID %>" method="POST" style="margin:0">
                           <input type="hidden" name="action" value="reject">
                           <button type="submit" class="btn btn-danger btn-sm">Reject</button>
                         </form>
                       </div>
+
+                    <% } else if (vr.Status === 'active') { %>
+                      <div class="action-group-row">
+                        <form action="/admin/vehicle/<%= vr.RegistrationID %>" method="POST" style="margin:0">
+                          <input type="hidden" name="action" value="suspend">
+                          <button type="submit" class="btn btn-warning btn-sm">Suspend</button>
+                        </form>
+                        <form action="/admin/vehicle/<%= vr.RegistrationID %>" method="POST" style="margin:0">
+                          <input type="hidden" name="action" value="reject">
+                          <button type="submit" class="btn btn-danger btn-sm">Reject</button>
+                        </form>
+                      </div>
+
+                    <% } else if (vr.Status === 'suspended') { %>
+                      <div class="action-group-row">
+                        <form action="/admin/unsuspend-vehicle/<%= vr.RegistrationID %>" method="POST" style="margin:0">
+                          <button type="submit" class="btn btn-success btn-sm">Unsuspend</button>
+                        </form>
+                        <form action="/admin/vehicle/<%= vr.RegistrationID %>" method="POST" style="margin:0">
+                          <input type="hidden" name="action" value="reject">
+                          <button type="submit" class="btn btn-danger btn-sm">Reject</button>
+                        </form>
+                      </div>
+
+                    <% } else if (vr.Status === 'rejected') { %>
+                      <form action="/admin/vehicle/<%= vr.RegistrationID %>" method="POST" style="margin:0">
+                        <input type="hidden" name="action" value="approve">
+                        <button type="submit" class="btn btn-success btn-sm">Approve</button>
+                      </form>
+
                     <% } else { %>
-                      <span style="color:var(--gray-400);font-size:0.8rem">—</span>
+                      <span style="color:var(--gray-300)">—</span>
                     <% } %>
                   </td>
 
                 </tr>
-              <% }) %>
-            </tbody>
-          </table>
-        </div>
-      <% } %>
-    </div>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+
+    </div><!-- /tab-vehicles -->
 
   </div><!-- /page-wrapper -->
+
+  <script>
+    function showTab(name, btn) {
+      document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+      document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+      document.getElementById('tab-' + name).classList.add('active');
+      btn.classList.add('active');
+    }
+  </script>
 
 </body>
 </html>

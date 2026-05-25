@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add Vehicle - Ride Sharing System</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <%- include('partials/navbar') %>
+
+  <div class="page-wrapper" style="max-width:540px">
+
+    <div class="page-header">
+      <div style="display:flex;align-items:center;gap:12px">
+        <a href="/driver/dashboard" style="display:flex;align-items:center;color:var(--gray-400);text-decoration:none;transition:color 0.15s" title="Back to dashboard">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+        </a>
+        <h1>Add New Vehicle</h1>
+      </div>
+      <p>Register a vehicle to your driver profile so you can post rides.</p>
+    </div>
+
+    <% if (error) { %>
+      <div class="alert alert-error">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <%= error %>
+      </div>
+    <% } %>
+
+    <div class="card">
+      <div class="card-header">
+        <h2>Vehicle Details</h2>
+        <div class="card-header-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="1" y="3" width="15" height="13" rx="2"/>
+            <path d="M16 8h4l3 5v3h-7V8z"/>
+            <circle cx="5.5" cy="18.5" r="2.5"/>
+            <circle cx="18.5" cy="18.5" r="2.5"/>
+          </svg>
+        </div>
+      </div>
+      <div class="card-body">
+        <form action="/driver/add-vehicle" method="POST">
+          <div style="display:flex;flex-direction:column;gap:16px">
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="make">Make</label>
+                <input type="text" id="make" name="make" placeholder="e.g. Toyota" required autofocus>
+              </div>
+              <div class="form-group">
+                <label for="model">Model</label>
+                <input type="text" id="model" name="model" placeholder="e.g. Corolla" required>
+              </div>
+              <div class="form-group">
+                <label for="color">Color</label>
+                <input type="text" id="color" name="color" placeholder="e.g. White" required>
+              </div>
+              <div class="form-group">
+                <label for="plateNumber">Plate Number</label>
+                <input type="text" id="plateNumber" name="plateNumber" placeholder="e.g. ABC-123" required>
+              </div>
+              <div class="form-group full">
+                <label for="seatingCapacity">Seating Capacity</label>
+                <input type="number" id="seatingCapacity" name="seatingCapacity"
+                       min="1" max="20" placeholder="e.g. 4" required>
+              </div>
+            </div>
+
+            <div style="display:flex;gap:10px;margin-top:4px">
+              <button type="submit" class="btn btn-primary">Add Vehicle</button>
+              <a href="/driver/dashboard" class="btn btn-secondary">Cancel</a>
+            </div>
+
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

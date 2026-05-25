@@ -14,11 +14,57 @@
 
     <div class="page-header">
       <h1>Driver Dashboard</h1>
-      <p>Manage your rides and vehicles, <%= user.Name %></p>
+      <p>Manage your rides and vehicles, <%= user.Name %>.</p>
     </div>
 
-    <!-- Verification banners -->
-    <% if (!identityVerification || identityVerification.Status === 'rejected') { %>
+    <!-- ── Flash banners ─────────────────────────────────────────────── -->
+    <% if (added) { %>
+      <div class="alert alert-success">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        Vehicle added successfully. You can now register it below.
+      </div>
+    <% } %>
+    <% if (registered) { %>
+      <div class="alert alert-success">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        Vehicle registration submitted. Pending admin approval.
+      </div>
+    <% } %>
+    <% if (ridePosted) { %>
+      <div class="alert alert-success">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        Ride posted successfully.
+      </div>
+    <% } %>
+    <% if (rideError === 'identity_suspended') { %>
+      <div class="alert alert-error">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        Your account has been suspended. Contact admin to resolve this before posting rides.
+      </div>
+    <% } else if (rideError === 'vehicle_suspended') { %>
+      <div class="alert alert-error">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        This vehicle's registration has been suspended. Contact admin to resolve this.
+      </div>
+    <% } else if (rideError === 'vehicle_not_active') { %>
+      <div class="alert alert-warning">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        The selected vehicle does not have an active registration. Register and wait for approval before posting rides.
+      </div>
+    <% } else if (rideError === 'missing_fields') { %>
+      <div class="alert alert-error">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        All ride fields are required.
+      </div>
+    <% } %>
+
+    <!-- ── Identity banners ──────────────────────────────────────────── -->
+    <% if (identityVerification && identityVerification.Status === 'suspended') { %>
+      <div class="alert alert-error">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        <strong>Account suspended.</strong> Your identity verification has been suspended by an admin. Contact support to resolve this issue.
+      </div>
+    <% } else if (!identityVerification || identityVerification.Status === 'rejected') { %>
       <div class="alert alert-warning">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         <span>
@@ -29,22 +75,21 @@
     <% } else if (identityVerification.Status === 'pending') { %>
       <div class="alert alert-info">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        <span>Identity verification is <strong>pending review</strong>. We'll notify you once it's processed.</span>
+        Identity verification is <strong>pending review</strong>. We'll notify you once it's processed.
       </div>
     <% } %>
 
-    <% const unregCount = vehicles.filter(v => !vehicleRegs.some(r => r.VehicleID === v.VehicleID)).length; %>
-    <% if (vehicles.length > 0 && unregCount > 0) { %>
-      <div class="alert alert-warning">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        <span>
-          <strong><%= unregCount %> vehicle<%= unregCount > 1 ? 's' : '' %> without official registration.</strong>
-          <a href="/driver/register-vehicle" style="color:inherit;font-weight:600;text-decoration:underline;margin-left:6px">Register now →</a>
-        </span>
-      </div>
-    <% } %>
+    <!-- ── Suspended vehicle banners ─────────────────────────────────── -->
+    <% vehicleRegs.forEach(function(vr) { %>
+      <% if (vr.Status === 'suspended') { %>
+        <div class="alert alert-error">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          <strong>Vehicle registration suspended.</strong> One of your vehicle registrations has been suspended. Contact admin for details.
+        </div>
+      <% } %>
+    <% }); %>
 
-    <!-- Stats -->
+    <!-- ── Stats ─────────────────────────────────────────────────────── -->
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-label">Total Rides</div>
@@ -55,18 +100,18 @@
         <div class="stat-value green"><%= rides.filter(r => r.Status === 'active').length %></div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Vehicles Registered</div>
+        <div class="stat-label">My Vehicles</div>
         <div class="stat-value"><%= vehicles.length %></div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Available Seats (Total)</div>
-        <div class="stat-value yellow"><%= rides.filter(r=>r.Status==='active').reduce((s,r)=>s+r.AvailableSeats,0) %></div>
+        <div class="stat-label">Available Seats</div>
+        <div class="stat-value yellow"><%= rides.filter(r => r.Status === 'active').reduce((s, r) => s + r.AvailableSeats, 0) %></div>
       </div>
     </div>
 
     <div class="dashboard-grid">
 
-      <!-- Add Ride -->
+      <!-- ── Post a Ride ────────────────────────────────────────────── -->
       <div class="card">
         <div class="card-header">
           <h2>Post a New Ride</h2>
@@ -76,7 +121,7 @@
         </div>
         <div class="card-body">
           <form action="/driver/rides" method="POST">
-            <div style="display:flex;flex-direction:column;gap:14px;">
+            <div style="display:flex;flex-direction:column;gap:14px">
               <div class="form-group">
                 <label>Vehicle</label>
                 <select name="vehicleId" required>
@@ -120,85 +165,65 @@
         </div>
       </div>
 
-      <!-- Add Vehicle -->
-      <div class="card">
-        <div class="card-header">
-          <h2>Register a Vehicle</h2>
-          <div class="card-header-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-          </div>
-        </div>
-        <div class="card-body">
-          <form action="/driver/vehicle" method="POST">
-            <div style="display:flex;flex-direction:column;gap:14px;">
-              <div class="form-grid">
-                <div class="form-group">
-                  <label>Make</label>
-                  <input type="text" name="make" placeholder="Toyota" required>
-                </div>
-                <div class="form-group">
-                  <label>Model</label>
-                  <input type="text" name="model" placeholder="Corolla" required>
-                </div>
-                <div class="form-group">
-                  <label>Color</label>
-                  <input type="text" name="color" placeholder="White" required>
-                </div>
-                <div class="form-group">
-                  <label>Plate Number</label>
-                  <input type="text" name="plateNumber" placeholder="ABC-123" required>
-                </div>
-                <div class="form-group full">
-                  <label>Seating Capacity</label>
-                  <input type="number" name="seatingCapacity" min="1" max="20" placeholder="4" required>
-                </div>
-              </div>
-              <button type="submit" class="btn btn-primary">Register Vehicle</button>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      <!-- My Vehicles -->
+      <!-- ── My Vehicles ────────────────────────────────────────────── -->
       <div class="card">
         <div class="card-header">
           <h2>My Vehicles</h2>
-          <a href="/driver/register-vehicle" class="btn btn-secondary btn-sm">Register Vehicle</a>
+          <a href="/driver/add-vehicle" class="btn btn-primary btn-sm">+ Add Vehicle</a>
         </div>
         <% if (vehicles.length === 0) { %>
           <div class="empty-state">
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-            <p>No vehicles registered yet.</p>
+            <p>No vehicles yet. <a href="/driver/add-vehicle" style="color:var(--blue-600);font-weight:600">Add your first vehicle →</a></p>
           </div>
         <% } else { %>
           <div class="table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th>Make / Model</th>
-                  <th>Color</th>
+                  <th>Vehicle</th>
                   <th>Plate</th>
                   <th>Seats</th>
                   <th>Reg. Status</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
                 <% vehicles.forEach(v => { %>
                   <% const reg = vehicleRegs.find(r => r.VehicleID === v.VehicleID); %>
                   <tr>
-                    <td><strong><%= v.Make %></strong> <%= v.Model %></td>
-                    <td><%= v.Color %></td>
+                    <td>
+                      <div style="font-weight:600;color:var(--gray-900)"><%= v.Make %> <%= v.Model %></div>
+                      <div style="font-size:0.75rem;color:var(--gray-500)"><%= v.Color %></div>
+                    </td>
                     <td><code style="background:var(--gray-100);padding:2px 6px;border-radius:4px;font-size:0.8rem"><%= v.PlateNumber %></code></td>
                     <td><%= v.SeatingCapacity %></td>
                     <td>
                       <% if (!reg) { %>
-                        <a href="/driver/register-vehicle" style="font-size:0.78rem;color:var(--red);font-weight:600;text-decoration:none">Not registered</a>
+                        <span style="font-size:0.78rem;color:var(--gray-500)">Not registered</span>
+                      <% } else if (reg.Status === 'pending') { %>
+                        <span class="badge badge-pending">Pending</span>
+                      <% } else if (reg.Status === 'active') { %>
+                        <span class="badge badge-active">Active</span>
+                      <% } else if (reg.Status === 'suspended') { %>
+                        <span class="badge badge-suspended">Suspended</span>
                       <% } else if (reg.Status === 'expired') { %>
                         <span class="badge badge-cancelled">Expired</span>
-                      <% } else if (reg.Status === 'suspended') { %>
-                        <span class="badge badge-pending">Suspended</span>
                       <% } else { %>
-                        <span class="badge badge-active">Active</span>
+                        <span class="badge badge-cancelled">Rejected</span>
+                      <% } %>
+                    </td>
+                    <td>
+                      <% if (!reg || reg.Status === 'suspended' || reg.Status === 'rejected') { %>
+                        <a href="/driver/register-vehicle/<%= v.VehicleID %>"
+                           class="btn btn-secondary btn-sm" style="white-space:nowrap">
+                          Register
+                        </a>
+                      <% } else { %>
+                        <a href="/driver/register-vehicle/<%= v.VehicleID %>"
+                           style="font-size:0.75rem;color:var(--gray-400);text-decoration:none">
+                          View
+                        </a>
                       <% } %>
                     </td>
                   </tr>
@@ -209,7 +234,7 @@
         <% } %>
       </div>
 
-      <!-- My Rides -->
+      <!-- ── My Recent Rides ─────────────────────────────────────────── -->
       <div class="card full-width">
         <div class="card-header">
           <h2>My Recent Rides</h2>
@@ -237,7 +262,7 @@
                   <tr>
                     <td><%= r.Origin %></td>
                     <td><%= r.Destination %></td>
-                    <td><%= new Date(r.DepartureTime).toLocaleString('en-PK', {dateStyle:'medium', timeStyle:'short'}) %></td>
+                    <td><%= new Date(r.DepartureTime).toLocaleString('en-PK', { dateStyle: 'medium', timeStyle: 'short' }) %></td>
                     <td>
                       <span style="color:var(--blue-600);font-weight:600"><%= r.AvailableSeats %></span>
                       <span style="color:var(--gray-400)">/ <%= r.TotalSeats %></span>

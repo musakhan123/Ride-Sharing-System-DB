@@ -13,7 +13,9 @@ router.get('/register', (req, res) => {
 // GET /auth/login
 router.get('/login', (req, res) => {
   if (req.session.user) return res.redirect('/');
-  const success = req.query.registered ? 'Account created successfully! Please login.' : null;
+  const success = req.query.registered ? 'Account created successfully! Please login.'
+                : req.query.logout    ? 'You have been logged out successfully.'
+                : null;
   res.render('login', { error: null, success });
 });
 
@@ -83,8 +85,9 @@ router.post('/login', async (req, res) => {
 // POST /auth/logout
 router.post('/logout', (req, res) => {
   req.session.destroy(err => {
-    if (err) return res.status(500).json({ error: 'Logout failed' });
-    res.json({ message: 'Logged out successfully' });
+    if (err) return res.status(500).send('Logout failed');
+    res.clearCookie('connect.sid');
+    res.redirect('/auth/login?logout=1');
   });
 });
 
