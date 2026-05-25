@@ -12,7 +12,11 @@ ALTER TABLE `USERS`
 ALTER TABLE `IDENTITY_VERIFICATION`
   ADD COLUMN `DocumentFile` VARCHAR(255) NULL AFTER `DocumentNumber`;
 
--- 3. Add 'pending' as the new default status for VEHICLE_REGISTRATION
+-- 3. Add rejection reason column to IDENTITY_VERIFICATION
+ALTER TABLE `IDENTITY_VERIFICATION`
+  ADD COLUMN `RejectionReason` VARCHAR(500) NULL AFTER `DocumentFile`;
+
+-- 4. Add 'pending' as the new default status for VEHICLE_REGISTRATION
 --    (new submissions start pending until admin approves)
 ALTER TABLE `VEHICLE_REGISTRATION`
   MODIFY COLUMN `Status` ENUM('pending', 'active', 'expired', 'suspended') NULL DEFAULT 'pending';

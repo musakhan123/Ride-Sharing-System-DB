@@ -324,6 +324,61 @@ body {
 
 .form-group input::placeholder { color: var(--gray-400); }
 
+/* ── File Upload Zone ─────────────────────────────────────────── */
+.file-upload-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 28px 20px;
+  border: 2px dashed var(--gray-300);
+  border-radius: var(--radius);
+  background: var(--gray-50);
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.15s, background 0.15s;
+  position: relative;
+  overflow: hidden;
+}
+
+.file-upload-zone:hover,
+.file-upload-zone:focus-within {
+  border-color: var(--blue-500);
+  background: var(--blue-50);
+}
+
+.file-upload-zone.has-file {
+  border-color: var(--blue-500);
+  background: var(--blue-50);
+}
+
+.file-upload-zone input[type="file"] {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: none;
+}
+
+.file-upload-zone .fuz-icon { color: var(--gray-400); transition: color 0.15s; }
+.file-upload-zone:hover .fuz-icon,
+.file-upload-zone:focus-within .fuz-icon,
+.file-upload-zone.has-file .fuz-icon { color: var(--blue-500); }
+
+.file-upload-zone .fuz-label {
+  font-size: 0.875rem;
+  color: var(--gray-700);
+  font-weight: 500;
+}
+
+.file-upload-zone .fuz-hint {
+  font-size: 0.78rem;
+  color: var(--gray-400);
+}
+
 .role-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

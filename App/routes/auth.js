@@ -128,14 +128,30 @@ router.post('/verify-identity', handleUpload('documentFile'), async (req, res) =
       'SELECT * FROM IDENTITY_VERIFICATION WHERE UserID = ? ORDER BY SubmittedAt DESC LIMIT 1',
       [userId]
     );
+
     if (existing.length > 0) {
-      return rerender('You have already submitted a verification request.', null, existing[0]);
+      if (existing[0].Status !== 'rejected') {
+        return rerender('You have already submitted a verification request.', null, existing[0]);
+      }
+      // Resubmission — overwrite the rejected record
+      await db.query(
+        `UPDATE IDENTITY_VERIFICATION
+         SET DocumentType = ?, DocumentNumber = ?, DocumentFile = ?,
+             Status = 'pending', RejectionReason = NULL, SubmittedAt = NOW()
+         WHERE VerificationID = ?`,
+        [documentType, documentNumber, documentFile, existing[0].VerificationID]
+      );
+      const [updated] = await db.query(
+        'SELECT * FROM IDENTITY_VERIFICATION WHERE VerificationID = ?',
+        [existing[0].VerificationID]
+      );
+      return rerender(null, 'Documents resubmitted. Your verification is now pending review.', updated[0]);
     }
 
     await db.query(
-      `INSERT INTO IDENTITY_VERIFICATION (UserID, DocumentType, DocumentNumber, Status, SubmittedAt)
-       VALUES (?, ?, ?, 'pending', NOW())`,
-      [userId, documentType, documentNumber]
+      `INSERT INTO IDENTITY_VERIFICATION (UserID, DocumentType, DocumentNumber, DocumentFile, Status, SubmittedAt)
+       VALUES (?, ?, ?, ?, 'pending', NOW())`,
+      [userId, documentType, documentNumber, documentFile]
     );
     const [newRow] = await db.query(
       'SELECT * FROM IDENTITY_VERIFICATION WHERE UserID = ? ORDER BY SubmittedAt DESC LIMIT 1',

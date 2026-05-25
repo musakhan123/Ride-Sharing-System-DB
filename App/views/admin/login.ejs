@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login - Ride Sharing System</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="auth-page">
+
+  <a href="/" class="auth-brand">
+    <img src="/images/logo.svg" alt="Ride Sharing System" height="38">
+  </a>
+
+  <!-- Admin badge sits just below the logo -->
+  <div style="margin-top:-20px;margin-bottom:28px;display:flex;align-items:center;justify-content:center;gap:8px">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="2">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    </svg>
+    <span style="font-size:0.78rem;font-weight:600;color:rgba(255,255,255,0.65);letter-spacing:1.5px;text-transform:uppercase">Admin Portal</span>
+  </div>
+
+  <div class="auth-card">
+    <h2>Admin Sign In</h2>
+    <p class="auth-subtitle">Restricted access — authorised personnel only</p>
+
+    <% if (error) { %>
+      <div class="alert alert-error">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <%= error %>
+      </div>
+    <% } %>
+
+    <form action="/admin/login" method="POST">
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="form-group">
+          <label for="email">Email address</label>
+          <input type="email" id="email" name="email" placeholder="admin@example.com" required autofocus>
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" placeholder="Enter admin password" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="margin-top:4px">
+          Sign in to Admin Panel
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <p class="auth-footer">
+    Not an admin? <a href="/auth/login">User login →</a>
+  </p>
+
+</body>
+</html>
