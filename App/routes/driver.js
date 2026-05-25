@@ -18,7 +18,28 @@ router.get('/dashboard', requireRole('driver'), async (req, res) => {
     );
     const [vehicles] = await db.query('SELECT * FROM VEHICLES WHERE DriverID = ?', [driverId]);
     const [locations] = await db.query('SELECT * FROM LOCATIONS ORDER BY City, LocationName');
-    res.render('driver-dashboard', { user: req.session.user, rides, vehicles, locations });
+
+    const [identityRows] = await db.query(
+      'SELECT * FROM IDENTITY_VERIFICATION WHERE UserID = ? ORDER BY SubmittedAt DESC LIMIT 1',
+      [driverId]
+    );
+    const identityVerification = identityRows[0] || null;
+
+    const [vehicleRegs] = await db.query(
+      `SELECT vr.* FROM VEHICLE_REGISTRATION vr
+       JOIN VEHICLES v ON vr.VehicleID = v.VehicleID
+       WHERE v.DriverID = ?`,
+      [driverId]
+    );
+
+    res.render('driver-dashboard', {
+      user: req.session.user,
+      rides,
+      vehicles,
+      locations,
+      identityVerification,
+      vehicleRegs
+    });
   } catch (err) {
     res.status(500).send(err.message);
   }
@@ -81,6 +102,86 @@ router.post('/rides', requireRole('driver'), async (req, res) => {
     res.status(201).json({ message: 'Ride created', rideId: result.insertId });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /driver/register-vehicle
+router.get('/register-vehicle', requireRole('driver'), async (req, res) => {
+  const driverId = req.session.user.UserID;
+  try {
+    const [vehicles] = await db.query('SELECT * FROM VEHICLES WHERE DriverID = ?', [driverId]);
+    const [regRows] = await db.query(
+      `SELECT vr.VehicleID FROM VEHICLE_REGISTRATION vr
+       JOIN VEHICLES v ON vr.VehicleID = v.VehicleID
+       WHERE v.DriverID = ?`,
+      [driverId]
+    );
+    const registeredIds = regRows.map(r => r.VehicleID);
+    res.render('driver-register-vehicle', {
+      user: req.session.user,
+      vehicles,
+      registeredIds,
+      error: null,
+      success: null
+    });
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
+// POST /driver/register-vehicle
+router.post('/register-vehicle', requireRole('driver'), async (req, res) => {
+  const { vehicleId, registrationNumber, expiryDate } = req.body;
+  const driverId = req.session.user.UserID;
+
+  const loadFormData = async () => {
+    const [vehicles] = await db.query('SELECT * FROM VEHICLES WHERE DriverID = ?', [driverId]);
+    const [regRows] = await db.query(
+      `SELECT vr.VehicleID FROM VEHICLE_REGISTRATION vr
+       JOIN VEHICLES v ON vr.VehicleID = v.VehicleID
+       WHERE v.DriverID = ?`,
+      [driverId]
+    );
+    return { vehicles, registeredIds: regRows.map(r => r.VehicleID) };
+  };
+
+  const rerender = async (error, success) => {
+    const { vehicles, registeredIds } = await loadFormData();
+    res.render('driver-register-vehicle', { user: req.session.user, vehicles, registeredIds, error, success });
+  };
+
+  try {
+    if (!vehicleId || !registrationNumber || !expiryDate) {
+      return rerender('All fields are required.', null);
+    }
+
+    const [vehicleCheck] = await db.query(
+      'SELECT VehicleID FROM VEHICLES WHERE VehicleID = ? AND DriverID = ?',
+      [vehicleId, driverId]
+    );
+    if (vehicleCheck.length === 0) {
+      return rerender('Vehicle not found or does not belong to you.', null);
+    }
+
+    const [existingReg] = await db.query(
+      'SELECT RegistrationID FROM VEHICLE_REGISTRATION WHERE VehicleID = ?',
+      [vehicleId]
+    );
+    if (existingReg.length > 0) {
+      return rerender('This vehicle already has a registration on file.', null);
+    }
+
+    await db.query(
+      `INSERT INTO VEHICLE_REGISTRATION (VehicleID, RegistrationNumber, ExpiryDate, Status)
+       VALUES (?, ?, ?, 'pending')`,
+      [vehicleId, registrationNumber, expiryDate]
+    );
+    return rerender(null, 'Registration submitted. Pending admin approval.');
+  } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') {
+      return rerender('That registration number is already in use.', null);
+    }
+    res.status(500).send(err.message);
   }
 });
 

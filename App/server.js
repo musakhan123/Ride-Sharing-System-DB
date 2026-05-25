@@ -28,12 +28,14 @@ const authRouter = require('./routes/auth');
 const driverRouter = require('./routes/driver');
 const passengerRouter = require('./routes/passenger');
 const reviewsRouter = require('./routes/reviews');
+const adminRouter = require('./routes/admin');
 
 app.use('/', indexRouter);
 app.use('/auth', authRouter);
 app.use('/driver', driverRouter);
 app.use('/passenger', passengerRouter);
 app.use('/reviews', reviewsRouter);
+app.use('/admin', adminRouter);
 
 db.getConnection()
   .then(conn => {

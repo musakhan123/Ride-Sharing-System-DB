@@ -405,6 +405,16 @@ body {
 
 .btn-danger:hover { background: #fecaca; }
 
+.btn-success {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+}
+
+.btn-success:hover { background: #a7f3d0; }
+
 .btn-sm { padding: 6px 14px; font-size: 0.85rem; }
 
 .btn-nav-register {
@@ -481,6 +491,8 @@ tbody tr:hover td { background: var(--blue-50); }
 
 .alert-error   { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
 .alert-success { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+.alert-warning { background: #fffbeb; color: #78350f; border: 1px solid #fcd34d; }
+.alert-info    { background: var(--blue-50); color: var(--blue-800); border: 1px solid var(--blue-100); }
 
 /* ── Empty State ─────────────────────────────────────────────────── */
 .empty-state {

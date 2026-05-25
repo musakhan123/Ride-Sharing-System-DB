@@ -11,4 +11,11 @@ function requireRole(role) {
   };
 }
 
-module.exports = { requireLogin, requireRole };
+// For HTML page routes — redirects instead of returning JSON
+function requireAdmin(req, res, next) {
+  if (!req.session.user) return res.redirect('/auth/login');
+  if (req.session.user.Role !== 'admin') return res.redirect('/');
+  next();
+}
+
+module.exports = { requireLogin, requireRole, requireAdmin };

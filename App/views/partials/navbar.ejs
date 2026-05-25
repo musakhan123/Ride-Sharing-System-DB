@@ -5,12 +5,16 @@
     </a>
     <div class="nav-links">
       <% if (typeof user !== 'undefined' && user) { %>
-        <% if (user.Role === 'driver') { %>
+        <% if (user.Role === 'admin') { %>
+          <a href="/admin/dashboard" class="nav-link">Admin Panel</a>
+        <% } else if (user.Role === 'driver') { %>
           <a href="/driver/dashboard" class="nav-link">Dashboard</a>
         <% } else { %>
           <a href="/passenger/dashboard" class="nav-link">Dashboard</a>
         <% } %>
-        <a href="/reviews" class="nav-link">Reviews</a>
+        <% if (user.Role !== 'admin') { %>
+          <a href="/reviews" class="nav-link">Reviews</a>
+        <% } %>
         <span class="nav-user">
           <span class="nav-user-dot"></span>
           <%= user.Name %>

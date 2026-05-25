@@ -17,6 +17,33 @@
       <p>Manage your rides and vehicles, <%= user.Name %></p>
     </div>
 
+    <!-- Verification banners -->
+    <% if (!identityVerification || identityVerification.Status === 'rejected') { %>
+      <div class="alert alert-warning">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span>
+          <strong>Identity not verified.</strong>
+          <a href="/auth/verify-identity" style="color:inherit;font-weight:600;text-decoration:underline;margin-left:6px">Submit your documents →</a>
+        </span>
+      </div>
+    <% } else if (identityVerification.Status === 'pending') { %>
+      <div class="alert alert-info">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>Identity verification is <strong>pending review</strong>. We'll notify you once it's processed.</span>
+      </div>
+    <% } %>
+
+    <% const unregCount = vehicles.filter(v => !vehicleRegs.some(r => r.VehicleID === v.VehicleID)).length; %>
+    <% if (vehicles.length > 0 && unregCount > 0) { %>
+      <div class="alert alert-warning">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span>
+          <strong><%= unregCount %> vehicle<%= unregCount > 1 ? 's' : '' %> without official registration.</strong>
+          <a href="/driver/register-vehicle" style="color:inherit;font-weight:600;text-decoration:underline;margin-left:6px">Register now →</a>
+        </span>
+      </div>
+    <% } %>
+
     <!-- Stats -->
     <div class="stats-grid">
       <div class="stat-card">
@@ -136,6 +163,7 @@
       <div class="card">
         <div class="card-header">
           <h2>My Vehicles</h2>
+          <a href="/driver/register-vehicle" class="btn btn-secondary btn-sm">Register Vehicle</a>
         </div>
         <% if (vehicles.length === 0) { %>
           <div class="empty-state">
@@ -151,15 +179,28 @@
                   <th>Color</th>
                   <th>Plate</th>
                   <th>Seats</th>
+                  <th>Reg. Status</th>
                 </tr>
               </thead>
               <tbody>
                 <% vehicles.forEach(v => { %>
+                  <% const reg = vehicleRegs.find(r => r.VehicleID === v.VehicleID); %>
                   <tr>
                     <td><strong><%= v.Make %></strong> <%= v.Model %></td>
                     <td><%= v.Color %></td>
                     <td><code style="background:var(--gray-100);padding:2px 6px;border-radius:4px;font-size:0.8rem"><%= v.PlateNumber %></code></td>
                     <td><%= v.SeatingCapacity %></td>
+                    <td>
+                      <% if (!reg) { %>
+                        <a href="/driver/register-vehicle" style="font-size:0.78rem;color:var(--red);font-weight:600;text-decoration:none">Not registered</a>
+                      <% } else if (reg.Status === 'expired') { %>
+                        <span class="badge badge-cancelled">Expired</span>
+                      <% } else if (reg.Status === 'suspended') { %>
+                        <span class="badge badge-pending">Suspended</span>
+                      <% } else { %>
+                        <span class="badge badge-active">Active</span>
+                      <% } %>
+                    </td>
                   </tr>
                 <% }) %>
               </tbody>
