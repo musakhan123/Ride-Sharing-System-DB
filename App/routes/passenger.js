@@ -3,6 +3,30 @@ const router = express.Router();
 const db = require('../config/db');
 const { requireRole } = require('../config/middleware');
 
+// GET /passenger/dashboard
+router.get('/dashboard', requireRole('passenger'), async (req, res) => {
+  const passengerId = req.session.user.UserID;
+  try {
+    const [bookings] = await db.query(
+      `SELECT b.BookingID, b.BookingTime, b.Status AS BookingStatus,
+              r.DepartureTime, r.Status AS RideStatus,
+              o.LocationName AS Origin, d.LocationName AS Destination,
+              u.Name AS DriverName
+       FROM BOOKINGS b
+       JOIN RIDES r ON b.RideID = r.RideID
+       JOIN LOCATIONS o ON r.OriginID = o.LocationID
+       JOIN LOCATIONS d ON r.DestinationID = d.LocationID
+       JOIN USERS u ON r.DriverID = u.UserID
+       WHERE b.PassengerID = ? ORDER BY b.BookingTime DESC LIMIT 5`,
+      [passengerId]
+    );
+    const [locations] = await db.query('SELECT * FROM LOCATIONS ORDER BY City, LocationName');
+    res.render('passenger-dashboard', { user: req.session.user, bookings, locations });
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
 // GET /passenger/rides/search?originId=&destinationId=
 router.get('/rides/search', requireRole('passenger'), async (req, res) => {
   const { originId, destinationId } = req.query;

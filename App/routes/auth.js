@@ -3,6 +3,18 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const db = require('../config/db');
 
+// GET /auth/register
+router.get('/register', (req, res) => {
+  if (req.session.user) return res.redirect('/');
+  res.render('register', { error: null });
+});
+
+// GET /auth/login
+router.get('/login', (req, res) => {
+  if (req.session.user) return res.redirect('/');
+  res.render('login', { error: null });
+});
+
 // POST /auth/register
 router.post('/register', async (req, res) => {
   const { name, email, phone, password, role } = req.body;

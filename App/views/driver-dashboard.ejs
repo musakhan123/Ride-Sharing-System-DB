@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Driver Dashboard - Ride Sharing</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Welcome, <%= user.Name %></h1>
+      <form action="/auth/logout" method="POST" style="display:inline">
+        <button type="submit">Logout</button>
+      </form>
+    </header>
+
+    <section>
+      <h2>Add a Vehicle</h2>
+      <form action="/driver/vehicle" method="POST">
+        <div class="form-group">
+          <label>Make</label>
+          <input type="text" name="make" required>
+        </div>
+        <div class="form-group">
+          <label>Model</label>
+          <input type="text" name="model" required>
+        </div>
+        <div class="form-group">
+          <label>Color</label>
+          <input type="text" name="color" required>
+        </div>
+        <div class="form-group">
+          <label>Plate Number</label>
+          <input type="text" name="plateNumber" required>
+        </div>
+        <div class="form-group">
+          <label>Seating Capacity</label>
+          <input type="number" name="seatingCapacity" min="1" required>
+        </div>
+        <button type="submit">Add Vehicle</button>
+      </form>
+    </section>
+
+    <section>
+      <h2>My Vehicles</h2>
+      <% if (vehicles.length === 0) { %>
+        <p>No vehicles added yet.</p>
+      <% } else { %>
+        <table>
+          <thead>
+            <tr>
+              <th>Make</th><th>Model</th><th>Color</th><th>Plate</th><th>Seats</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% vehicles.forEach(v => { %>
+              <tr>
+                <td><%= v.Make %></td>
+                <td><%= v.Model %></td>
+                <td><%= v.Color %></td>
+                <td><%= v.PlateNumber %></td>
+                <td><%= v.SeatingCapacity %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </section>
+
+    <section>
+      <h2>Add a Ride</h2>
+      <form action="/driver/rides" method="POST">
+        <div class="form-group">
+          <label>Vehicle ID</label>
+          <input type="number" name="vehicleId" required>
+        </div>
+        <div class="form-group">
+          <label>Origin Location ID</label>
+          <input type="number" name="originId" required>
+        </div>
+        <div class="form-group">
+          <label>Destination Location ID</label>
+          <input type="number" name="destinationId" required>
+        </div>
+        <div class="form-group">
+          <label>Departure Time</label>
+          <input type="datetime-local" name="departureTime" required>
+        </div>
+        <div class="form-group">
+          <label>Total Seats</label>
+          <input type="number" name="totalSeats" min="1" required>
+        </div>
+        <button type="submit">Create Ride</button>
+      </form>
+    </section>
+
+    <section>
+      <h2>Recent Rides</h2>
+      <% if (rides.length === 0) { %>
+        <p>No rides created yet.</p>
+      <% } else { %>
+        <table>
+          <thead>
+            <tr>
+              <th>From</th><th>To</th><th>Departure</th><th>Seats</th><th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% rides.forEach(r => { %>
+              <tr>
+                <td><%= r.Origin %></td>
+                <td><%= r.Destination %></td>
+                <td><%= new Date(r.DepartureTime).toLocaleString() %></td>
+                <td><%= r.AvailableSeats %>/<%= r.TotalSeats %></td>
+                <td><%= r.Status %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </section>
+  </div>
+</body>
+</html>

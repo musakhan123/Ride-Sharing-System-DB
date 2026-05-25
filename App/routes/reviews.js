@@ -3,6 +3,27 @@ const router = express.Router();
 const db = require('../config/db');
 const { requireLogin, requireRole } = require('../config/middleware');
 
+// GET /reviews — render reviews page
+router.get('/', requireLogin, async (req, res) => {
+  try {
+    const [reviews] = await db.query(
+      `SELECT rv.ReviewID, rv.Rating, rv.Comment, rv.ReviewDate,
+              u.Name AS PassengerName, d.Name AS DriverName,
+              o.LocationName AS Origin, dest.LocationName AS Destination
+       FROM REVIEWS rv
+       JOIN USERS u ON rv.PassengerID = u.UserID
+       JOIN USERS d ON rv.DriverID = d.UserID
+       JOIN RIDES r ON rv.RideID = r.RideID
+       JOIN LOCATIONS o ON r.OriginID = o.LocationID
+       JOIN LOCATIONS dest ON r.DestinationID = dest.LocationID
+       ORDER BY rv.ReviewDate DESC`
+    );
+    res.render('reviews', { user: req.session.user, reviews });
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
 // POST /reviews — add a review (passenger only)
 router.post('/', requireRole('passenger'), async (req, res) => {
   const { rideId, rating, comment } = req.body;

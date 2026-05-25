@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reviews - Ride Sharing</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Ride Reviews</h1>
+      <a href="/">Home</a>
+    </header>
+
+    <% if (reviews.length === 0) { %>
+      <p>No reviews yet.</p>
+    <% } else { %>
+      <table>
+        <thead>
+          <tr>
+            <th>Passenger</th>
+            <th>Driver</th>
+            <th>Route</th>
+            <th>Rating</th>
+            <th>Comment</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% reviews.forEach(r => { %>
+            <tr>
+              <td><%= r.PassengerName %></td>
+              <td><%= r.DriverName %></td>
+              <td><%= r.Origin %> → <%= r.Destination %></td>
+              <td><%= r.Rating %>/5</td>
+              <td><%= r.Comment || '-' %></td>
+              <td><%= new Date(r.ReviewDate).toLocaleDateString() %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+</body>
+</html>

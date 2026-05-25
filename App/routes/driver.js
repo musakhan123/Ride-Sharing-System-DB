@@ -3,6 +3,26 @@ const router = express.Router();
 const db = require('../config/db');
 const { requireRole } = require('../config/middleware');
 
+// GET /driver/dashboard
+router.get('/dashboard', requireRole('driver'), async (req, res) => {
+  const driverId = req.session.user.UserID;
+  try {
+    const [rides] = await db.query(
+      `SELECT r.RideID, r.DepartureTime, r.AvailableSeats, r.TotalSeats, r.Status,
+              o.LocationName AS Origin, d.LocationName AS Destination
+       FROM RIDES r
+       JOIN LOCATIONS o ON r.OriginID = o.LocationID
+       JOIN LOCATIONS d ON r.DestinationID = d.LocationID
+       WHERE r.DriverID = ? ORDER BY r.DepartureTime DESC LIMIT 5`,
+      [driverId]
+    );
+    const [vehicles] = await db.query('SELECT * FROM VEHICLES WHERE DriverID = ?', [driverId]);
+    res.render('driver-dashboard', { user: req.session.user, rides, vehicles });
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
 // POST /driver/vehicle — add a vehicle
 router.post('/vehicle', requireRole('driver'), async (req, res) => {
   const { make, model, color, plateNumber, seatingCapacity } = req.body;

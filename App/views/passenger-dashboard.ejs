@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Passenger Dashboard - Ride Sharing</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Welcome, <%= user.Name %></h1>
+      <form action="/auth/logout" method="POST" style="display:inline">
+        <button type="submit">Logout</button>
+      </form>
+    </header>
+
+    <section>
+      <h2>Search Rides</h2>
+      <form action="/passenger/rides/search" method="GET">
+        <div class="form-group">
+          <label>From</label>
+          <select name="originId" required>
+            <option value="">Select origin</option>
+            <% locations.forEach(l => { %>
+              <option value="<%= l.LocationID %>"><%= l.LocationName %>, <%= l.City %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>To</label>
+          <select name="destinationId" required>
+            <option value="">Select destination</option>
+            <% locations.forEach(l => { %>
+              <option value="<%= l.LocationID %>"><%= l.LocationName %>, <%= l.City %></option>
+            <% }) %>
+          </select>
+        </div>
+        <button type="submit">Search</button>
+      </form>
+    </section>
+
+    <section>
+      <h2>My Recent Bookings</h2>
+      <% if (bookings.length === 0) { %>
+        <p>No bookings yet.</p>
+      <% } else { %>
+        <table>
+          <thead>
+            <tr>
+              <th>From</th><th>To</th><th>Departure</th><th>Driver</th><th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% bookings.forEach(b => { %>
+              <tr>
+                <td><%= b.Origin %></td>
+                <td><%= b.Destination %></td>
+                <td><%= new Date(b.DepartureTime).toLocaleString() %></td>
+                <td><%= b.DriverName %></td>
+                <td><%= b.BookingStatus %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </section>
+
+    <p><a href="/reviews">View All Reviews</a></p>
+  </div>
+</body>
+</html>
