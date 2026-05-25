@@ -470,6 +470,15 @@ body {
 
 .btn-success:hover { background: #a7f3d0; }
 
+.btn-warning {
+  background: #ffedd5;
+  color: #9a3412;
+  border: 1px solid #fdba74;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+}
+.btn-warning:hover { background: #fed7aa; }
+
 .btn-sm { padding: 6px 14px; font-size: 0.85rem; }
 
 .btn-nav-register {
@@ -530,6 +539,7 @@ tbody tr:hover td { background: var(--blue-50); }
 .badge-completed              { background: var(--blue-100); color: var(--blue-800); }
 .badge-cancelled              { background: #fee2e2; color: #991b1b; }
 .badge-pending                { background: #fef3c7; color: #92400e; }
+.badge-suspended              { background: #ffedd5; color: #9a3412; }
 .badge-driver                 { background: var(--blue-100); color: var(--blue-800); }
 .badge-passenger              { background: #ede9fe; color: #5b21b6; }
 
