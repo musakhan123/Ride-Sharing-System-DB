@@ -1,6 +1,7 @@
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
+const db = require('./config/db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -25,6 +26,15 @@ app.use(session({
 const indexRouter = require('./routes/index');
 app.use('/', indexRouter);
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+db.getConnection()
+  .then(conn => {
+    console.log('MySQL connected successfully');
+    conn.release();
+    app.listen(PORT, () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
+  })
+  .catch(err => {
+    console.error('MySQL connection failed:', err.message);
+    process.exit(1);
+  });
