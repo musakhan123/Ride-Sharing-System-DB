@@ -135,6 +135,69 @@
       width: 155px;
       background: var(--white);
     }
+
+    /* ── Filter toolbar ──────────────────────────────────────────── */
+    .filter-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--gray-100);
+      background: var(--gray-50);
+      flex-wrap: wrap;
+    }
+    .search-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 180px;
+      max-width: 320px;
+    }
+    .search-wrap svg {
+      position: absolute;
+      left: 9px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--gray-400);
+      pointer-events: none;
+    }
+    .search-input {
+      width: 100%;
+      padding: 7px 10px 7px 32px;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      font-size: 0.83rem;
+      color: var(--gray-800);
+      background: var(--white);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      box-sizing: border-box;
+    }
+    .search-input:focus {
+      border-color: var(--blue-400);
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+    }
+    .status-select {
+      padding: 7px 10px;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      font-size: 0.83rem;
+      color: var(--gray-700);
+      background: var(--white);
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .status-select:focus {
+      border-color: var(--blue-400);
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+    }
+    .no-results-row { display: none; }
+    .no-results-row td {
+      text-align: center;
+      padding: 32px 16px;
+      color: var(--gray-400);
+      font-size: 0.875rem;
+    }
   </style>
 </head>
 <body>
@@ -236,6 +299,25 @@
             <p>No identity verification requests yet.</p>
           </div>
         <% } else { %>
+          <!-- Filter toolbar -->
+          <div class="filter-toolbar">
+            <div class="search-wrap">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <input type="text" class="search-input" id="iv-search"
+                     placeholder="Search by name, email, document no…"
+                     oninput="filterIV()">
+            </div>
+            <select class="status-select" id="iv-status" onchange="filterIV()">
+              <option value="">All statuses</option>
+              <option value="pending">Pending</option>
+              <option value="verified">Verified</option>
+              <option value="rejected">Rejected</option>
+              <option value="suspended">Suspended</option>
+            </select>
+          </div>
+
           <div class="table-wrap">
             <table>
               <thead>
@@ -250,10 +332,12 @@
                   <th>Actions</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody id="iv-tbody">
                 <% for (var i = 0; i < identityVerifications.length; i++) { %>
                 <% var iv = identityVerifications[i]; %>
-                <tr style="<%= iv.Status === 'pending' ? 'background:var(--blue-50)' : iv.Status === 'suspended' ? 'background:#fff7ed' : '' %>">
+                <tr data-search="<%= (iv.UserName + ' ' + iv.Email + ' ' + iv.DocumentNumber).toLowerCase() %>"
+                    data-status="<%= iv.Status %>"
+                    style="<%= iv.Status === 'pending' ? 'background:var(--blue-50)' : iv.Status === 'suspended' ? 'background:#fff7ed' : '' %>">
 
                   <td style="color:var(--gray-400);font-size:0.78rem">#<%= iv.VerificationID %></td>
 
@@ -361,6 +445,9 @@
 
                 </tr>
                 <% } %>
+                <tr class="no-results-row" id="iv-no-results">
+                  <td colspan="8">No records match your search.</td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -407,6 +494,25 @@
             <p>No vehicle registrations yet.</p>
           </div>
         <% } else { %>
+          <!-- Filter toolbar -->
+          <div class="filter-toolbar">
+            <div class="search-wrap">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <input type="text" class="search-input" id="vr-search"
+                     placeholder="Search by name, email, plate, reg no…"
+                     oninput="filterVR()">
+            </div>
+            <select class="status-select" id="vr-status" onchange="filterVR()">
+              <option value="">All statuses</option>
+              <option value="pending">Pending</option>
+              <option value="active">Active</option>
+              <option value="rejected">Rejected</option>
+              <option value="suspended">Suspended</option>
+            </select>
+          </div>
+
           <div class="table-wrap">
             <table>
               <thead>
@@ -423,10 +529,12 @@
                   <th>Actions</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody id="vr-tbody">
                 <% for (var j = 0; j < vehicleRegistrations.length; j++) { %>
                 <% var vr = vehicleRegistrations[j]; %>
-                <tr style="<%= vr.Status === 'pending' ? 'background:var(--blue-50)' : vr.Status === 'suspended' ? 'background:#fff7ed' : '' %>">
+                <tr data-search="<%= (vr.DriverName + ' ' + vr.DriverEmail + ' ' + vr.PlateNumber + ' ' + vr.RegistrationNumber).toLowerCase() %>"
+                    data-status="<%= vr.Status %>"
+                    style="<%= vr.Status === 'pending' ? 'background:var(--blue-50)' : vr.Status === 'suspended' ? 'background:#fff7ed' : '' %>">
 
                   <td style="color:var(--gray-400);font-size:0.78rem">#<%= vr.RegistrationID %></td>
 
@@ -540,6 +648,9 @@
 
                 </tr>
                 <% } %>
+                <tr class="no-results-row" id="vr-no-results">
+                  <td colspan="10">No records match your search.</td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -556,6 +667,39 @@
       document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
       document.getElementById('tab-' + name).classList.add('active');
       btn.classList.add('active');
+    }
+
+    function applyFilter(tbodyId, noResultsId, searchVal, statusVal) {
+      var tbody = document.getElementById(tbodyId);
+      if (!tbody) return;
+      var rows = tbody.querySelectorAll('tr:not(.no-results-row)');
+      var visible = 0;
+      var q = searchVal.toLowerCase().trim();
+      rows.forEach(function(row) {
+        var matchSearch = !q || (row.dataset.search || '').includes(q);
+        var matchStatus = !statusVal || row.dataset.status === statusVal;
+        var show = matchSearch && matchStatus;
+        row.style.display = show ? '' : 'none';
+        if (show) visible++;
+      });
+      var noResults = document.getElementById(noResultsId);
+      if (noResults) noResults.style.display = visible === 0 ? '' : 'none';
+    }
+
+    function filterIV() {
+      applyFilter(
+        'iv-tbody', 'iv-no-results',
+        document.getElementById('iv-search').value,
+        document.getElementById('iv-status').value
+      );
+    }
+
+    function filterVR() {
+      applyFilter(
+        'vr-tbody', 'vr-no-results',
+        document.getElementById('vr-search').value,
+        document.getElementById('vr-status').value
+      );
     }
   </script>
 

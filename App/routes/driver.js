@@ -33,10 +33,11 @@ router.get('/dashboard', requireRole('driver'), async (req, res) => {
       [driverId]
     );
 
-    const added      = req.query.added        === '1';
-    const registered = req.query.registered   === '1';
-    const ridePosted = req.query.ride_posted  === '1';
-    const rideError  = req.query.ride_error   || null;
+    const added        = req.query.added        === '1';
+    const registered   = req.query.registered   === '1';
+    const ridePosted   = req.query.ride_posted  === '1';
+    const rideError    = req.query.ride_error   || null;
+    const vehicleError = req.query.vehicle_error || null;
 
     res.render('driver-dashboard', {
       user: req.session.user,
@@ -48,7 +49,8 @@ router.get('/dashboard', requireRole('driver'), async (req, res) => {
       added,
       registered,
       ridePosted,
-      rideError
+      rideError,
+      vehicleError
     });
   } catch (err) {
     res.status(500).send(err.message);
@@ -56,8 +58,26 @@ router.get('/dashboard', requireRole('driver'), async (req, res) => {
 });
 
 // GET /driver/add-vehicle
-router.get('/add-vehicle', requireRole('driver'), (req, res) => {
-  res.render('driver-add-vehicle', { user: req.session.user, error: null });
+router.get('/add-vehicle', requireRole('driver'), async (req, res) => {
+  const driverId = req.session.user.UserID;
+  try {
+    const [idRows] = await db.query(
+      'SELECT Status FROM IDENTITY_VERIFICATION WHERE UserID = ? ORDER BY SubmittedAt DESC LIMIT 1',
+      [driverId]
+    );
+    const idStatus = idRows[0]?.Status || null;
+
+    if (idStatus === 'suspended') {
+      return res.redirect('/driver/dashboard?vehicle_error=identity_suspended');
+    }
+    if (idStatus !== 'verified') {
+      return res.redirect('/driver/dashboard?vehicle_error=identity_not_verified');
+    }
+
+    res.render('driver-add-vehicle', { user: req.session.user, error: null });
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
 });
 
 // POST /driver/add-vehicle
@@ -198,8 +218,12 @@ router.post('/rides', requireRole('driver'), async (req, res) => {
       'SELECT Status FROM IDENTITY_VERIFICATION WHERE UserID = ? ORDER BY SubmittedAt DESC LIMIT 1',
       [driverId]
     );
-    if (idRows.length > 0 && idRows[0].Status === 'suspended') {
+    const idStatus = idRows[0]?.Status || null;
+    if (idStatus === 'suspended') {
       return res.redirect('/driver/dashboard?ride_error=identity_suspended');
+    }
+    if (idStatus !== 'verified') {
+      return res.redirect('/driver/dashboard?ride_error=identity_not_verified');
     }
 
     // Check vehicle ownership
