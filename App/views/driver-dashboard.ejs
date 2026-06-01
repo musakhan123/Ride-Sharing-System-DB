@@ -5,6 +5,45 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Driver Dashboard - Ride Sharing System</title>
   <link rel="stylesheet" href="/css/style.css">
+  <style>
+    @keyframes fare-pulse {
+      0%   { box-shadow: 0 0 0 0   rgba(59,130,246,0.55); }
+      60%  { box-shadow: 0 0 0 10px rgba(59,130,246,0);   }
+      100% { box-shadow: 0 0 0 0   rgba(59,130,246,0);    }
+    }
+    .fare-pulse { animation: fare-pulse 0.75s ease-out 3; }
+
+    /* ── Setup progress badge ───────────────────────────────────────── */
+    .setup-badge {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      padding: 14px 20px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-sm);
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      transition: box-shadow 0.15s, border-color 0.15s;
+    }
+    .setup-badge:hover { box-shadow: var(--shadow-md); border-color: var(--blue-200); }
+    .setup-ring { position: relative; width: 48px; height: 48px; flex-shrink: 0; }
+    .setup-ring-pct {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.68rem; font-weight: 800; color: var(--blue-700);
+    }
+    .setup-badge-text { flex: 1; min-width: 0; }
+    .setup-badge-title { font-size: 0.875rem; font-weight: 700; color: var(--gray-800); margin-bottom: 2px; }
+    .setup-badge-sub   { font-size: 0.78rem; color: var(--gray-500); }
+    .setup-badge-bar   { margin-top: 7px; height: 4px; background: var(--gray-100); border-radius: 99px; overflow: hidden; max-width: 180px; }
+    .setup-badge-fill  { height: 4px; border-radius: 99px; background: var(--blue-600); }
+    .setup-badge-fill.complete { background: #059669; }
+    .setup-badge-cta   { font-size: 0.8rem; font-weight: 600; color: var(--blue-600); white-space: nowrap; flex-shrink: 0; }
+  </style>
 </head>
 <body>
 
@@ -18,6 +57,12 @@
     </div>
 
     <!-- ── Flash banners ─────────────────────────────────────────────── -->
+    <% if (idSubmitted) { %>
+      <div class="alert alert-success">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        Identity documents submitted. Your verification is now pending admin review.
+      </div>
+    <% } %>
     <% if (added) { %>
       <div class="alert alert-success">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
@@ -34,6 +79,12 @@
       <div class="alert alert-success">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
         Ride posted successfully.
+      </div>
+    <% } %>
+    <% if (typeof rideCompleted !== 'undefined' && rideCompleted) { %>
+      <div class="alert alert-success">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        Ride marked as completed. All confirmed bookings have been updated.
       </div>
     <% } %>
     <% if (vehicleError === 'identity_suspended') { %>
@@ -75,6 +126,7 @@
     <% } %>
 
     <!-- ── Identity banners ──────────────────────────────────────────── -->
+    <div id="identity-status-banner">
     <% if (identityVerification && identityVerification.Status === 'suspended') { %>
       <div class="alert alert-error">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
@@ -94,6 +146,7 @@
         Identity verification is <strong>pending review</strong>. We'll notify you once it's processed.
       </div>
     <% } %>
+    </div>
 
     <!-- ── Suspended vehicle banners ─────────────────────────────────── -->
     <% vehicleRegs.forEach(function(vr) { %>
@@ -104,6 +157,19 @@
         </div>
       <% } %>
     <% }); %>
+
+    <!-- ── Fare requests notification ──────────────────────────────── -->
+    <div id="fare-request-banner">
+    <% if (pendingFareCount > 0) { %>
+      <div class="alert alert-info" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/></svg>
+          <span>You have <strong id="fare-banner-count"><%= pendingFareCount %></strong> pending fare request<span id="fare-banner-plural"><%= pendingFareCount !== 1 ? 's' : '' %></span> from passengers.</span>
+        </div>
+        <a href="/driver/fare-requests" class="btn btn-primary btn-sm" style="flex-shrink:0">Review Requests →</a>
+      </div>
+    <% } %>
+    </div>
 
     <!-- ── Stats ─────────────────────────────────────────────────────── -->
     <div class="stats-grid">
@@ -123,7 +189,53 @@
         <div class="stat-label">Available Seats</div>
         <div class="stat-value yellow"><%= rides.filter(r => r.Status === 'active').reduce((s, r) => s + r.AvailableSeats, 0) %></div>
       </div>
+      <div class="stat-card" id="fare-stat-card" style="cursor:pointer;position:relative" onclick="location.href='/driver/fare-requests'">
+        <div class="stat-label">Fare Requests</div>
+        <div class="stat-value" id="fare-count-value" style="color:var(--blue-600)"><%= pendingFareCount %></div>
+        <div id="fare-count-dot" style="position:absolute;top:12px;right:14px;width:8px;height:8px;background:#ef4444;border-radius:50%;<%= pendingFareCount > 0 ? '' : 'display:none' %>"></div>
+      </div>
     </div>
+
+    <!-- ── Setup progress badge ─────────────────────────────────────── -->
+    <% if (typeof checklist !== 'undefined' && checklist) { %>
+    <%
+      var _c    = checklist;
+      var _done = (_c.IdentityVerified  == 1 ? 1 : 0)
+                + (_c.VehicleRegistered == 1 ? 1 : 0)
+                + (_c.ProfileCompleted  == 1 ? 1 : 0);
+      var _spct = Math.round(_done / 3 * 100);
+      var _circ = Math.round(2 * Math.PI * 20); /* circumference ≈ 125 */
+    %>
+    <a href="/profile" class="setup-badge">
+      <div class="setup-ring">
+        <svg width="48" height="48" viewBox="0 0 48 48">
+          <circle cx="24" cy="24" r="20" fill="none" stroke="var(--gray-100)" stroke-width="4"/>
+          <circle cx="24" cy="24" r="20" fill="none"
+                  stroke="<%= _done === 3 ? '#059669' : 'var(--blue-600)' %>"
+                  stroke-width="4"
+                  stroke-dasharray="<%= _circ %>"
+                  stroke-dashoffset="<%= Math.round(_circ * (1 - _spct / 100)) %>"
+                  stroke-linecap="round"
+                  transform="rotate(-90 24 24)"/>
+        </svg>
+        <div class="setup-ring-pct"><%= _spct %>%</div>
+      </div>
+      <div class="setup-badge-text">
+        <div class="setup-badge-title">Setup Progress</div>
+        <div class="setup-badge-sub">
+          <% if (_done === 3) { %>
+            All steps complete — you're ready to drive!
+          <% } else { %>
+            <%= _done %>/3 steps complete &middot; tap to finish setup
+          <% } %>
+        </div>
+        <div class="setup-badge-bar">
+          <div class="setup-badge-fill <%= _done === 3 ? 'complete' : '' %>" style="width:<%= _spct %>%"></div>
+        </div>
+      </div>
+      <div class="setup-badge-cta">View Checklist →</div>
+    </a>
+    <% } %>
 
     <div class="dashboard-grid">
 
@@ -176,10 +288,10 @@
                 </div>
               </div>
               <% if (identityVerification && identityVerification.Status === 'verified') { %>
-                <button type="submit" class="btn btn-primary">Post Ride</button>
+                <button type="submit" id="post-ride-btn" class="btn btn-primary">Post Ride</button>
               <% } else { %>
                 <% var rideBtnTitle = !identityVerification || identityVerification.Status === 'rejected' ? 'Verify identity first' : identityVerification.Status === 'pending' ? 'Verification pending' : 'Account suspended'; %>
-                <button type="button" class="btn btn-primary" style="background:var(--gray-200);color:var(--gray-500);cursor:not-allowed;border:none" disabled title="<%= rideBtnTitle %>">Post Ride</button>
+                <button type="button" id="post-ride-btn" class="btn btn-primary" style="background:var(--gray-200);color:var(--gray-500);cursor:not-allowed;border:none" disabled title="<%= rideBtnTitle %>">Post Ride</button>
               <% } %>
             </div>
           </form>
@@ -190,6 +302,7 @@
       <div class="card">
         <div class="card-header">
           <h2>My Vehicles</h2>
+          <div id="add-vehicle-btn-wrap">
           <% if (identityVerification && identityVerification.Status === 'verified') { %>
             <a href="/driver/add-vehicle" class="btn btn-primary btn-sm">+ Add Vehicle</a>
           <% } else if (identityVerification && identityVerification.Status === 'pending') { %>
@@ -199,6 +312,7 @@
           <% } else { %>
             <button class="btn btn-sm" style="background:var(--gray-200);color:var(--gray-500);cursor:not-allowed;border:none" disabled title="Verify identity first">+ Add Vehicle</button>
           <% } %>
+          </div>
         </div>
         <% if (vehicles.length === 0) { %>
           <div class="empty-state">
@@ -290,6 +404,7 @@
                   <th>Departure</th>
                   <th>Seats</th>
                   <th>Status</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
@@ -303,6 +418,16 @@
                       <span style="color:var(--gray-400)">/ <%= r.TotalSeats %></span>
                     </td>
                     <td><span class="badge badge-<%= r.Status %>"><%= r.Status %></span></td>
+                    <td>
+                      <% if (r.Status === 'active') { %>
+                        <form action="/driver/complete-ride/<%= r.RideID %>" method="POST" style="margin:0"
+                              onsubmit="return confirm('Mark this ride as completed?')">
+                          <button type="submit" class="btn btn-sm" style="font-size:0.75rem;padding:4px 10px">
+                            ✓ Complete
+                          </button>
+                        </form>
+                      <% } %>
+                    </td>
                   </tr>
                 <% }) %>
               </tbody>
@@ -313,6 +438,102 @@
 
     </div>
   </div>
+
+<script>
+(function () {
+  if (!window._rideSocket) return;
+  var userRole = '<%= user.Role %>';
+
+  // ── New fare request: update badge + banner without page reload ──────────
+  window._rideSocket.on('new-fare-request', function (data) {
+    if (userRole !== 'driver') return;
+    var ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/></svg>';
+
+    // Increment stat counter
+    var countEl = document.getElementById('fare-count-value');
+    var newCount = (parseInt(countEl ? countEl.textContent : '0') || 0) + 1;
+    if (countEl) countEl.textContent = newCount;
+
+    // Show red dot
+    var dot = document.getElementById('fare-count-dot');
+    if (dot) dot.style.display = '';
+
+    // Update / show the banner
+    var banner = document.getElementById('fare-request-banner');
+    if (banner) {
+      banner.innerHTML =
+        '<div class="alert alert-info" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">' +
+          '<div style="display:flex;align-items:center;gap:10px">' + ICON +
+            '<span>You have <strong>' + newCount + '</strong> pending fare request' + (newCount !== 1 ? 's' : '') + ' from passengers.</span>' +
+          '</div>' +
+          '<a href="/driver/fare-requests" class="btn btn-primary btn-sm" style="flex-shrink:0">Review Requests →</a>' +
+        '</div>';
+    }
+
+    // Pulse animation on the stat card
+    var card = document.getElementById('fare-stat-card');
+    if (card) {
+      card.classList.remove('fare-pulse');
+      void card.offsetWidth; // force reflow so animation restarts
+      card.classList.add('fare-pulse');
+    }
+  });
+
+  // ── Verification status change ────────────────────────────────────────
+  window._rideSocket.on('verification-status-changed', function (data) {
+    if (userRole !== 'driver') return;
+    updateIdentityUI(data.status);
+  });
+
+  function updateIdentityUI(status) {
+    var ICON_WARN  = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+    var ICON_ERR   = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+    var ICON_INFO  = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+
+    // ── Identity banner ──────────────────────────────────────────────
+    var banner = document.getElementById('identity-status-banner');
+    if (banner) {
+      if (status === 'verified') {
+        banner.innerHTML = '';
+      } else if (status === 'suspended') {
+        banner.innerHTML = '<div class="alert alert-error">' + ICON_ERR + '<strong>Account suspended.</strong> Your identity verification has been suspended by an admin. Contact support to resolve this issue.</div>';
+      } else if (status === 'pending') {
+        banner.innerHTML = '<div class="alert alert-info">' + ICON_INFO + 'Identity verification is <strong>pending review</strong>. We\'ll notify you once it\'s processed.</div>';
+      } else {
+        banner.innerHTML = '<div class="alert alert-warning">' + ICON_WARN + '<span><strong>Identity not verified.</strong><a href="/auth/verify-identity" style="color:inherit;font-weight:600;text-decoration:underline;margin-left:6px">Submit your documents →</a></span></div>';
+      }
+    }
+
+    // ── Post Ride button ─────────────────────────────────────────────
+    var rideBtn = document.getElementById('post-ride-btn');
+    if (rideBtn) {
+      if (status === 'verified') {
+        rideBtn.type = 'submit';
+        rideBtn.disabled = false;
+        rideBtn.removeAttribute('style');
+        rideBtn.removeAttribute('title');
+      } else {
+        var rideTitle = status === 'suspended' ? 'Account suspended' : status === 'pending' ? 'Verification pending' : 'Verify identity first';
+        rideBtn.type = 'button';
+        rideBtn.disabled = true;
+        rideBtn.style.cssText = 'background:var(--gray-200);color:var(--gray-500);cursor:not-allowed;border:none';
+        rideBtn.title = rideTitle;
+      }
+    }
+
+    // ── Add Vehicle button ───────────────────────────────────────────
+    var addWrap = document.getElementById('add-vehicle-btn-wrap');
+    if (addWrap) {
+      if (status === 'verified') {
+        addWrap.innerHTML = '<a href="/driver/add-vehicle" class="btn btn-primary btn-sm">+ Add Vehicle</a>';
+      } else {
+        var vTitle = status === 'pending' ? 'Verification pending' : status === 'suspended' ? 'Account suspended' : 'Verify identity first';
+        addWrap.innerHTML = '<button class="btn btn-sm" style="background:var(--gray-200);color:var(--gray-500);cursor:not-allowed;border:none" disabled title="' + vTitle + '">+ Add Vehicle</button>';
+      }
+    }
+  }
+})();
+</script>
 
 </body>
 </html>

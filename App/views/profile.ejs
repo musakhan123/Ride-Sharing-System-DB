@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Profile - Ride Sharing System</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    /* ── Profile hero ──────────────────────────────────────────────── */
+    .profile-hero {
+      background: linear-gradient(135deg, var(--blue-800) 0%, var(--blue-600) 100%);
+      border-radius: var(--radius-lg);
+      padding: 32px 36px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin-bottom: 28px;
+      box-shadow: var(--shadow-md);
+    }
+    .profile-avatar {
+      width: 76px; height: 76px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.18);
+      border: 2px solid rgba(255,255,255,0.3);
+      color: var(--white);
+      font-size: 2rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      letter-spacing: -1px;
+    }
+    .profile-hero-info h2 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--white);
+      margin: 0 0 4px;
+    }
+    .profile-hero-info .hero-email {
+      color: var(--blue-100);
+      font-size: 0.875rem;
+      margin-bottom: 10px;
+    }
+    .profile-hero-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .role-chip {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 12px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: capitalize;
+      border: 1.5px solid rgba(255,255,255,0.3);
+      color: var(--white);
+      background: rgba(255,255,255,0.12);
+    }
+    .member-since {
+      font-size: 0.78rem;
+      color: var(--blue-100);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* ── Two-column grid ───────────────────────────────────────────── */
+    .profile-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 720px) { .profile-grid { grid-template-columns: 1fr; } }
+
+    /* ── Profile section cards ─────────────────────────────────────── */
+    .profile-section {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+    .profile-section-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--gray-100);
+      background: var(--gray-50);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .profile-section-header h2 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--gray-800);
+      margin: 0;
+    }
+    .profile-section-body { padding: 24px; }
+
+    /* ── Read-only info row ─────────────────────────────────────────── */
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--gray-100);
+      font-size: 0.875rem;
+    }
+    .info-row:last-of-type { border-bottom: none; }
+    .info-row .info-label { color: var(--gray-500); font-weight: 600; font-size: 0.8rem; }
+    .info-row .info-val   { color: var(--gray-800); font-weight: 500; }
+
+    /* ── Password strength bar ─────────────────────────────────────── */
+    .pwd-bar-wrap { margin-top: 6px; height: 4px; background: var(--gray-100); border-radius: 999px; overflow: hidden; }
+    .pwd-bar      { height: 4px; border-radius: 999px; width: 0; transition: width 0.2s, background 0.2s; }
+    .pwd-hint     { font-size: 0.75rem; color: var(--gray-400); margin-top: 4px; min-height: 1em; }
+
+    /* ── Account Checklist ──────────────────────────────────────────────── */
+    .checklist-card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      margin-bottom: 28px;
+    }
+    .checklist-header {
+      padding: 18px 24px 16px;
+      border-bottom: 1px solid var(--gray-100);
+      background: var(--gray-50);
+    }
+    .checklist-title-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .checklist-title-row h2 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--gray-800);
+      margin: 0;
+      flex: 1;
+    }
+    .cl-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .cl-badge.done { background: #d1fae5; color: #065f46; }
+    .cl-badge.prog { background: var(--blue-50); color: var(--blue-700); }
+    .cl-prog-wrap {
+      height: 6px;
+      background: var(--gray-200);
+      border-radius: 99px;
+      overflow: hidden;
+      margin-bottom: 6px;
+    }
+    .cl-prog-bar {
+      height: 6px;
+      border-radius: 99px;
+      background: linear-gradient(90deg, var(--blue-600), #60a5fa);
+      transition: width 0.5s ease;
+    }
+    .cl-prog-bar.all-done { background: linear-gradient(90deg, #059669, #34d399); }
+    .cl-prog-text { font-size: 0.72rem; color: var(--gray-400); font-weight: 500; }
+    .checklist-items { display: flex; flex-direction: column; }
+    .checklist-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--gray-100);
+      transition: background 0.1s;
+    }
+    .checklist-item:last-child { border-bottom: none; }
+    .checklist-item:hover { background: var(--gray-50); }
+    .cl-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .cl-icon.done { background: #d1fae5; color: #059669; }
+    .cl-icon.todo { background: var(--gray-100); color: var(--gray-400); }
+    .cl-content   { flex: 1; min-width: 0; }
+    .cl-label     { font-size: 0.875rem; font-weight: 600; color: var(--gray-800); margin-bottom: 2px; }
+    .cl-status    { font-size: 0.78rem; }
+    .cl-status.done { color: #059669; font-weight: 500; }
+    .cl-status.todo { color: var(--gray-400); }
+    .cl-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--blue-600);
+      text-decoration: none;
+      margin-top: 5px;
+    }
+    .cl-action:hover { color: var(--blue-800); text-decoration: underline; }
+    /* Pulse highlight when scrolled-to via anchor */
+    #edit-profile-form:target {
+      box-shadow: 0 0 0 3px #93c5fd, var(--shadow-sm);
+      transition: box-shadow 0.3s;
+    }
+
+    /* ── Save button ────────────────────────────────────────────────── */
+    .btn-save {
+      background: var(--blue-600); color: var(--white);
+      padding: 10px 24px; border-radius: var(--radius);
+      font-size: 0.9rem; font-weight: 600;
+      border: none; cursor: pointer;
+      transition: background 0.15s, box-shadow 0.15s;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .btn-save:hover { background: var(--blue-800); box-shadow: var(--shadow-md); }
+  </style>
+</head>
+<body>
+
+  <%- include('partials/navbar') %>
+
+  <div class="page-wrapper">
+
+    <!-- ── Flash alerts ───────────────────────────────────────────── -->
+    <% if (success === 'profile_updated') { %>
+      <div class="alert alert-success">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        Profile updated successfully.
+      </div>
+    <% } else if (success === 'password_changed') { %>
+      <div class="alert alert-success">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        Password changed successfully.
+      </div>
+    <% } %>
+    <% const _errMap = {
+         fields_required:   'All fields are required.',
+         passwords_mismatch:'New passwords do not match.',
+         password_too_short:'New password must be at least 6 characters long.',
+         wrong_password:    'Your current password is incorrect.'
+       }; %>
+    <% if (error && _errMap[error]) { %>
+      <div class="alert alert-error">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        <%= _errMap[error] %>
+      </div>
+    <% } %>
+
+    <!-- ── Profile hero ───────────────────────────────────────────── -->
+    <div class="profile-hero">
+      <div class="profile-avatar">
+        <%= profile.Name.trim().charAt(0).toUpperCase() %><% if (profile.Name.trim().includes(' ')) { %><%= profile.Name.trim().split(' ').pop().charAt(0).toUpperCase() %><% } %>
+      </div>
+      <div class="profile-hero-info">
+        <h2><%= profile.Name %></h2>
+        <div class="hero-email"><%= profile.Email %></div>
+        <div class="profile-hero-meta">
+          <span class="role-chip">
+            <% if (profile.Role === 'driver') { %>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+            <% } else { %>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <% } %>
+            <%= profile.Role %>
+          </span>
+          <% if (profile.CreatedAt) { %>
+            <span class="member-since">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              Member since <%= new Date(profile.CreatedAt).toLocaleDateString('en-PK', {dateStyle:'medium'}) %>
+            </span>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Account Checklist ────────────────────────────────────────── -->
+    <% if (typeof checklist !== 'undefined' && checklist) { %>
+    <%
+      var _cl        = checklist;
+      var _isDrv     = profile.Role === 'driver';
+      var _doneItems = (_cl.IdentityVerified  == 1 ? 1 : 0)
+                     + (_isDrv && _cl.VehicleRegistered == 1 ? 1 : 0)
+                     + (_cl.ProfileCompleted  == 1 ? 1 : 0)
+                     + (_cl.PaymentSetup      == 1 ? 1 : 0);
+      var _total     = _isDrv ? 4 : 3;
+      var _pct       = Math.round(_doneItems / _total * 100);
+      var _allDone   = _doneItems === _total;
+    %>
+    <div class="checklist-card">
+      <div class="checklist-header">
+        <div class="checklist-title-row">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue-600)" stroke-width="2">
+            <path d="M9 11l3 3L22 4"/>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+          </svg>
+          <h2>Account Checklist</h2>
+          <span class="cl-badge <%= _allDone ? 'done' : 'prog' %>"><%= _doneItems %>/<%= _total %> Complete</span>
+        </div>
+        <div class="cl-prog-wrap">
+          <div class="cl-prog-bar <%= _allDone ? 'all-done' : '' %>" style="width:<%= _pct %>%"></div>
+        </div>
+        <div class="cl-prog-text"><%= _pct %>% setup complete</div>
+      </div>
+
+      <div class="checklist-items">
+
+        <!-- Identity Verified -->
+        <div class="checklist-item">
+          <div class="cl-icon <%= _cl.IdentityVerified ? 'done' : 'todo' %>">
+            <% if (_cl.IdentityVerified) { %>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <% } else { %>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>
+            <% } %>
+          </div>
+          <div class="cl-content">
+            <div class="cl-label">Identity Verified</div>
+            <div class="cl-status <%= _cl.IdentityVerified ? 'done' : 'todo' %>">
+              <%= _cl.IdentityVerified ? 'Documents approved by admin' : 'Identity document not yet verified' %>
+            </div>
+            <% if (!_cl.IdentityVerified) { %>
+              <a href="/auth/verify-identity" class="cl-action">Submit documents →</a>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Vehicle Registered — drivers only -->
+        <% if (_isDrv) { %>
+        <div class="checklist-item">
+          <div class="cl-icon <%= _cl.VehicleRegistered ? 'done' : 'todo' %>">
+            <% if (_cl.VehicleRegistered) { %>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <% } else { %>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>
+            <% } %>
+          </div>
+          <div class="cl-content">
+            <div class="cl-label">Vehicle Registered</div>
+            <div class="cl-status <%= _cl.VehicleRegistered ? 'done' : 'todo' %>">
+              <%= _cl.VehicleRegistered ? 'Active vehicle registration on file' : 'No vehicle with active registration' %>
+            </div>
+            <% if (!_cl.VehicleRegistered) { %>
+              <a href="/driver/add-vehicle" class="cl-action">Add &amp; register a vehicle →</a>
+            <% } %>
+          </div>
+        </div>
+        <% } %>
+
+        <!-- Profile Complete -->
+        <div class="checklist-item">
+          <div class="cl-icon <%= _cl.ProfileCompleted ? 'done' : 'todo' %>">
+            <% if (_cl.ProfileCompleted) { %>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <% } else { %>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>
+            <% } %>
+          </div>
+          <div class="cl-content">
+            <div class="cl-label">Profile Complete</div>
+            <div class="cl-status <%= _cl.ProfileCompleted ? 'done' : 'todo' %>">
+              <%= _cl.ProfileCompleted ? 'Name and phone number on file' : 'Name or phone number is missing' %>
+            </div>
+            <% if (!_cl.ProfileCompleted) { %>
+              <a href="#edit-profile-form" class="cl-action">Fill in your details →</a>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Payment Setup -->
+        <div class="checklist-item">
+          <div class="cl-icon <%= _cl.PaymentSetup ? 'done' : 'todo' %>">
+            <% if (_cl.PaymentSetup) { %>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <% } else { %>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>
+            <% } %>
+          </div>
+          <div class="cl-content">
+            <div class="cl-label">Payment Setup</div>
+            <div class="cl-status <%= _cl.PaymentSetup ? 'done' : 'todo' %>">
+              <% if (_cl.PaymentSetup) { %>
+                At least one payment completed
+              <% } else if (_isDrv) { %>
+                Drivers receive payments — no action needed
+              <% } else { %>
+                No completed payments yet
+              <% } %>
+            </div>
+            <% if (!_cl.PaymentSetup && !_isDrv) { %>
+              <a href="/passenger/dashboard" class="cl-action">Book &amp; pay for a ride →</a>
+            <% } %>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <% } %>
+
+    <!-- ── Two-column forms ───────────────────────────────────────── -->
+    <div class="profile-grid">
+
+      <!-- Left: Account info + edit ────────────────────────────── -->
+      <div class="profile-section" id="edit-profile-form">
+        <div class="profile-section-header">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue-600)" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <h2>Account Information</h2>
+        </div>
+        <div class="profile-section-body">
+
+          <!-- Read-only fields -->
+          <div class="info-row">
+            <span class="info-label">Email</span>
+            <span class="info-val"><%= profile.Email %></span>
+          </div>
+          <div class="info-row" style="margin-bottom:20px">
+            <span class="info-label">Role</span>
+            <span class="badge badge-<%= profile.Role %>" style="font-size:0.75rem;text-transform:capitalize"><%= profile.Role %></span>
+          </div>
+
+          <!-- Editable fields -->
+          <form action="/profile/update" method="POST">
+            <div class="form-group" style="margin-bottom:14px">
+              <label>Full Name</label>
+              <input type="text" name="name" value="<%= profile.Name %>" required autocomplete="name"
+                     placeholder="Your full name">
+            </div>
+            <div class="form-group" style="margin-bottom:20px">
+              <label>Phone Number</label>
+              <input type="text" name="phone" value="<%= profile.Phone %>" required autocomplete="tel"
+                     placeholder="e.g. 03001234567">
+            </div>
+            <button type="submit" class="btn-save">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              Save Changes
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Right: Change password ────────────────────────────────── -->
+      <div class="profile-section">
+        <div class="profile-section-header">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue-600)" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <h2>Change Password</h2>
+        </div>
+        <div class="profile-section-body">
+          <form action="/profile/change-password" method="POST" id="pwdForm">
+            <div class="form-group" style="margin-bottom:14px">
+              <label>Current Password</label>
+              <input type="password" name="currentPassword" required autocomplete="current-password"
+                     placeholder="Enter your current password">
+            </div>
+            <div class="form-group" style="margin-bottom:6px">
+              <label>New Password</label>
+              <input type="password" name="newPassword" id="newPwd" required minlength="6"
+                     autocomplete="new-password" placeholder="At least 6 characters"
+                     oninput="checkStrength(this.value)">
+              <div class="pwd-bar-wrap"><div class="pwd-bar" id="pwdBar"></div></div>
+              <div class="pwd-hint" id="pwdHint"></div>
+            </div>
+            <div class="form-group" style="margin-bottom:20px">
+              <label>Confirm New Password</label>
+              <input type="password" name="confirmPassword" id="confirmPwd" required minlength="6"
+                     autocomplete="new-password" placeholder="Repeat new password"
+                     oninput="checkMatch()">
+              <div class="pwd-hint" id="matchHint"></div>
+            </div>
+            <button type="submit" class="btn-save">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              Change Password
+            </button>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    var bar   = document.getElementById('pwdBar');
+    var hint  = document.getElementById('pwdHint');
+
+    function checkStrength(v) {
+      var score = 0;
+      if (v.length >= 6)  score++;
+      if (v.length >= 10) score++;
+      if (/[A-Z]/.test(v)) score++;
+      if (/[0-9]/.test(v)) score++;
+      if (/[^A-Za-z0-9]/.test(v)) score++;
+
+      var levels = [
+        { w:'0%',   bg:'', label:'' },
+        { w:'25%',  bg:'var(--red)', label:'Too short' },
+        { w:'45%',  bg:'#f97316', label:'Weak' },
+        { w:'65%',  bg:'var(--yellow)', label:'Fair' },
+        { w:'85%',  bg:'#84cc16', label:'Good' },
+        { w:'100%', bg:'var(--green)', label:'Strong' }
+      ];
+      var l = levels[Math.min(score, 5)];
+      bar.style.width      = v.length === 0 ? '0%' : l.w;
+      bar.style.background = l.bg;
+      hint.textContent     = v.length === 0 ? '' : l.label;
+      hint.style.color     = l.bg || 'var(--gray-400)';
+    }
+
+    function checkMatch() {
+      var mh = document.getElementById('matchHint');
+      var nv = document.getElementById('newPwd').value;
+      var cv = document.getElementById('confirmPwd').value;
+      if (cv.length === 0) { mh.textContent = ''; return; }
+      if (nv === cv) {
+        mh.textContent = '✓ Passwords match';
+        mh.style.color = 'var(--green)';
+      } else {
+        mh.textContent = 'Passwords do not match';
+        mh.style.color = 'var(--red)';
+      }
+    }
+
+    // Auto-refresh checklist after profile update (without page reload)
+    async function refreshChecklistDisplay() {
+      try {
+        const response = await fetch('/profile/checklist', { method: 'GET' });
+        if (!response.ok) return;
+        const updated = await response.json();
+        
+        // Update checklist display if element exists
+        const checklistCard = document.querySelector('.checklist-card');
+        if (!checklistCard) return;
+        
+        const _cl = updated;
+        const _isDrv = document.querySelector('.role-chip')?.textContent?.includes('driver');
+        const _doneItems = (_cl.IdentityVerified ? 1 : 0) 
+                         + (_isDrv && _cl.VehicleRegistered ? 1 : 0) 
+                         + (_cl.ProfileCompleted ? 1 : 0) 
+                         + (_cl.PaymentSetup ? 1 : 0);
+        const _total = _isDrv ? 4 : 3;
+        const _pct = Math.round(_doneItems / _total * 100);
+        
+        // Update badge count
+        const badge = checklistCard.querySelector('.cl-badge');
+        if (badge) badge.textContent = _doneItems + '/' + _total + ' Complete';
+        
+        // Update progress bar
+        const progBar = checklistCard.querySelector('.cl-prog-bar');
+        if (progBar) {
+          progBar.style.width = _pct + '%';
+          if (_doneItems === _total) progBar.classList.add('all-done');
+        }
+        
+        // Update progress text
+        const progText = checklistCard.querySelector('.cl-prog-text');
+        if (progText) progText.textContent = _pct + '% setup complete';
+      } catch (e) {
+        console.log('[checklist-refresh]', e.message);
+      }
+    }
+
+    // Refresh checklist after profile form submission
+    document.addEventListener('DOMContentLoaded', function() {
+      const profileForm = document.querySelector('#edit-profile-form form');
+      if (profileForm) {
+        profileForm.addEventListener('submit', function() {
+          setTimeout(refreshChecklistDisplay, 2000);
+        });
+      }
+    });
+  </script>
+
+</body>
+</html>

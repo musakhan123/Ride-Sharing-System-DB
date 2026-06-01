@@ -12,7 +12,12 @@ router.get('/register', (req, res) => {
 
 // GET /auth/login
 router.get('/login', (req, res) => {
-  if (req.session.user) return res.redirect('/');
+  if (req.session.user) {
+    const role = req.session.user.Role;
+    if (role === 'driver')  return res.redirect('/driver/dashboard');
+    if (role === 'admin')   return res.redirect('/admin/dashboard');
+    return res.redirect('/passenger/dashboard');
+  }
   const success = req.query.registered ? 'Account created successfully! Please login.'
                 : req.query.logout    ? 'You have been logged out successfully.'
                 : null;
@@ -75,8 +80,11 @@ router.post('/login', async (req, res) => {
       Role: user.Role
     };
 
-    if (user.Role === 'admin') return res.redirect('/admin/dashboard');
-    res.redirect(user.Role === 'driver' ? '/driver/dashboard' : '/passenger/dashboard');
+    req.session.save(err => {
+      if (err) return res.render('login', { error: 'Login failed. Please try again.', success: null });
+      if (user.Role === 'admin') return res.redirect('/admin/dashboard');
+      res.redirect(user.Role === 'driver' ? '/driver/dashboard' : '/passenger/dashboard');
+    });
   } catch (err) {
     res.render('login', { error: 'Something went wrong. Please try again.', success: null });
   }
@@ -126,6 +134,10 @@ router.post('/verify-identity', handleUpload('documentFile'), async (req, res) =
   if (!documentFile) return rerender('Please upload a document file (JPG, PNG, or PDF).', null, null);
   if (!['CNIC', 'student_card', 'passport'].includes(documentType)) return rerender('Invalid document type.', null, null);
 
+  const dashUrl = req.session.user.Role === 'driver'
+    ? '/driver/dashboard?id_submitted=1'
+    : '/passenger/dashboard';
+
   try {
     const [existing] = await db.query(
       'SELECT * FROM IDENTITY_VERIFICATION WHERE UserID = ? ORDER BY SubmittedAt DESC LIMIT 1',
@@ -144,11 +156,7 @@ router.post('/verify-identity', handleUpload('documentFile'), async (req, res) =
          WHERE VerificationID = ?`,
         [documentType, documentNumber, documentFile, existing[0].VerificationID]
       );
-      const [updated] = await db.query(
-        'SELECT * FROM IDENTITY_VERIFICATION WHERE VerificationID = ?',
-        [existing[0].VerificationID]
-      );
-      return rerender(null, 'Documents resubmitted. Your verification is now pending review.', updated[0]);
+      return res.redirect(dashUrl);
     }
 
     await db.query(
@@ -156,11 +164,7 @@ router.post('/verify-identity', handleUpload('documentFile'), async (req, res) =
        VALUES (?, ?, ?, ?, 'pending', NOW())`,
       [userId, documentType, documentNumber, documentFile]
     );
-    const [newRow] = await db.query(
-      'SELECT * FROM IDENTITY_VERIFICATION WHERE UserID = ? ORDER BY SubmittedAt DESC LIMIT 1',
-      [userId]
-    );
-    return rerender(null, 'Verification submitted. Your documents are pending review.', newRow[0]);
+    return res.redirect(dashUrl);
   } catch (err) {
     console.error('[verify-identity] DB error:', err.message, '| code:', err.code);
     if (err.code === 'ER_DUP_ENTRY') {

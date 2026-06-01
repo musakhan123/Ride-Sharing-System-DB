@@ -5,6 +5,59 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Passenger Dashboard - Ride Sharing System</title>
   <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .ride-result-card {
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .ride-result-card:hover { border-color: var(--blue-400, #60a5fa); box-shadow: 0 0 0 3px rgba(59,130,246,0.08); }
+    .ride-result-top {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 14px; gap: 12px; flex-wrap: wrap;
+    }
+    .ride-info { flex: 1; min-width: 0; }
+    .ride-route { font-size: 0.95rem; font-weight: 700; color: var(--gray-900); margin-bottom: 4px; }
+    .ride-meta  { font-size: 0.78rem; color: var(--gray-500); display: flex; flex-wrap: wrap; gap: 10px; }
+    .ride-meta span { display: flex; align-items: center; gap: 4px; }
+    .ride-seats {
+      font-size: 0.75rem; font-weight: 700; padding: 3px 9px;
+      border-radius: 999px; background: #d1fae5; color: #065f46; flex-shrink: 0;
+    }
+    .fare-propose-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 14px;
+      background: var(--blue-50);
+      border-top: 1px solid var(--blue-100, #dbeafe);
+      flex-wrap: wrap;
+    }
+    .fare-suggest {
+      font-size: 0.75rem; color: var(--blue-600); flex: 1;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .fare-input-wrap {
+      display: flex; align-items: center; gap: 6px; flex-shrink: 0;
+    }
+    .fare-input {
+      width: 90px; padding: 6px 8px;
+      border: 1px solid var(--blue-300, #93c5fd);
+      border-radius: var(--radius); font-size: 0.85rem;
+      outline: none; background: var(--white);
+      transition: border-color 0.15s;
+    }
+    .fare-input:focus { border-color: var(--blue-500); }
+
+    .search-results-header {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+    }
+    .search-results-header h3 { font-size: 0.9rem; font-weight: 700; color: var(--gray-700); margin: 0; }
+    #results-container { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+    #results-container.hidden { display: none; }
+
+    .nego-status-proposed  { background:#fef9c3;color:#92400e;padding:3px 9px;border-radius:999px;font-size:0.72rem;font-weight:700; }
+    .nego-status-countered { background:#dbeafe;color:#1d4ed8;padding:3px 9px;border-radius:999px;font-size:0.72rem;font-weight:700; }
+  </style>
 </head>
 <body>
 
@@ -17,7 +70,92 @@
       <p>Find and book rides, <%= user.Name %></p>
     </div>
 
-    <!-- Stats -->
+    <!-- ── Flash messages ─────────────────────────────────────────── -->
+    <% if (fareProposed) { %>
+      <div class="alert alert-success">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        Fare proposal sent! The driver will review and respond shortly.
+      </div>
+    <% } %>
+    <% if (fareRejected) { %>
+      <div class="alert alert-warning">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Fare rejected. The booking has been cancelled. You can search for another ride below.
+      </div>
+    <% } %>
+    <% if (bookingError === 'ride_unavailable') { %>
+      <div class="alert alert-error">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        This ride is no longer available or has no seats remaining.
+      </div>
+    <% } else if (bookingError === 'already_booked') { %>
+      <div class="alert alert-warning">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        You already have a pending or confirmed booking for this ride.
+      </div>
+    <% } else if (bookingError === 'invalid_fare') { %>
+      <div class="alert alert-error">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Please enter a valid fare amount before submitting.
+      </div>
+    <% } %>
+
+    <!-- ── Pending fare negotiations ───────────────────────────────── -->
+    <% if (pendingFares.length > 0) { %>
+    <div class="card full-width" style="margin-bottom:24px;border-color:var(--blue-200,#bfdbfe)">
+      <div class="card-header" style="background:var(--blue-50);border-bottom-color:var(--blue-100,#dbeafe)">
+        <h2 style="color:var(--blue-700,#1d4ed8)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+          Pending Fare Negotiations
+        </h2>
+        <span style="background:var(--blue-600);color:#fff;font-size:0.7rem;font-weight:700;padding:2px 8px;border-radius:999px"><%= pendingFares.length %></span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Route</th>
+              <th>Departure</th>
+              <th>Driver</th>
+              <th>Your Offer</th>
+              <th>Driver Response</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% pendingFares.forEach(function(pf) { %>
+            <tr>
+              <td>
+                <strong style="color:var(--gray-900);font-size:0.875rem"><%= pf.Origin %> → <%= pf.Destination %></strong>
+              </td>
+              <td style="font-size:0.85rem;white-space:nowrap"><%= new Date(pf.DepartureTime).toLocaleString('en-PK', {dateStyle:'medium', timeStyle:'short'}) %></td>
+              <td style="font-size:0.875rem"><%= pf.DriverName %></td>
+              <td><strong style="color:#92400e">Rs. <%= Number(pf.ProposedFare).toLocaleString('en-PK') %></strong></td>
+              <td>
+                <% if (pf.FareStatus === 'proposed') { %>
+                  <span class="nego-status-proposed">Awaiting driver</span>
+                <% } else if (pf.FareStatus === 'countered') { %>
+                  <div>
+                    <span class="nego-status-countered">Counter: Rs. <%= Number(pf.DriverFare).toLocaleString('en-PK') %></span>
+                  </div>
+                <% } %>
+              </td>
+              <td>
+                <% if (pf.FareStatus === 'countered') { %>
+                  <a href="/passenger/fare-response/<%= pf.BookingID %>" class="btn btn-primary btn-sm">Review Offer</a>
+                <% } else { %>
+                  <span style="color:var(--gray-400);font-size:0.8rem">—</span>
+                <% } %>
+              </td>
+            </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <% } %>
+
+    <!-- ── Stats ──────────────────────────────────────────────────── -->
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-label">Total Bookings</div>
@@ -28,6 +166,10 @@
         <div class="stat-value green"><%= bookings.filter(b => b.BookingStatus === 'confirmed').length %></div>
       </div>
       <div class="stat-card">
+        <div class="stat-label">Pending</div>
+        <div class="stat-value yellow"><%= pendingFares.length %></div>
+      </div>
+      <div class="stat-card">
         <div class="stat-label">Cancelled</div>
         <div class="stat-value" style="color:var(--red)"><%= bookings.filter(b => b.BookingStatus === 'cancelled').length %></div>
       </div>
@@ -35,8 +177,8 @@
 
     <div class="dashboard-grid">
 
-      <!-- Search Rides -->
-      <div class="card">
+      <!-- ── Search Rides ───────────────────────────────────────── -->
+      <div class="card" style="grid-column: span 2">
         <div class="card-header">
           <h2>Search Available Rides</h2>
           <div class="card-header-icon">
@@ -44,50 +186,59 @@
           </div>
         </div>
         <div class="card-body">
-          <form action="/passenger/rides/search" method="GET">
-            <div style="display:flex;flex-direction:column;gap:14px;">
-              <div class="form-group">
+          <form id="search-form">
+            <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end">
+              <div class="form-group" style="flex:1;min-width:160px;margin:0">
                 <label>From</label>
-                <select name="originId" required>
+                <select name="originID" id="originID" required>
                   <option value="">Select pickup location</option>
                   <% locations.forEach(l => { %>
                     <option value="<%= l.LocationID %>"><%= l.LocationName %>, <%= l.City %></option>
                   <% }) %>
                 </select>
               </div>
-              <div class="form-group">
+              <div class="form-group" style="flex:1;min-width:160px;margin:0">
                 <label>To</label>
-                <select name="destinationId" required>
+                <select name="destinationID" id="destinationID" required>
                   <option value="">Select destination</option>
                   <% locations.forEach(l => { %>
                     <option value="<%= l.LocationID %>"><%= l.LocationName %>, <%= l.City %></option>
                   <% }) %>
                 </select>
               </div>
-              <button type="submit" class="btn btn-primary">Search Rides</button>
+              <button type="submit" class="btn btn-primary" id="search-btn" style="height:42px;white-space:nowrap">Search Rides</button>
             </div>
           </form>
+
+          <div id="results-container" class="hidden">
+            <div class="search-results-header">
+              <h3 id="results-label">Available Rides</h3>
+              <button onclick="clearResults()" style="background:none;border:none;font-size:0.78rem;color:var(--gray-400);cursor:pointer">Clear ✕</button>
+            </div>
+            <div id="results-list"></div>
+          </div>
         </div>
       </div>
 
-      <!-- Quick Links -->
+      <!-- ── Quick Actions ─────────────────────────────────────── -->
       <div class="card">
-        <div class="card-header">
-          <h2>Quick Actions</h2>
-        </div>
+        <div class="card-header"><h2>Quick Actions</h2></div>
         <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
           <a href="/reviews" class="btn btn-secondary" style="justify-content:flex-start;gap:10px">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
             View All Reviews
           </a>
-          <a href="/passenger/bookings" class="btn btn-secondary" style="justify-content:flex-start;gap:10px">
+          <a href="/passenger/my-bookings" class="btn btn-secondary" style="justify-content:flex-start;gap:10px;position:relative">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
             All My Bookings
+            <% if (pendingFares.length > 0) { %>
+              <span style="margin-left:auto;background:var(--blue-600);color:#fff;font-size:0.65rem;font-weight:700;padding:2px 7px;border-radius:999px"><%= pendingFares.length %></span>
+            <% } %>
           </a>
         </div>
       </div>
 
-      <!-- Recent Bookings -->
+      <!-- ── Recent Bookings ──────────────────────────────────── -->
       <div class="card full-width">
         <div class="card-header">
           <h2>Recent Bookings</h2>
@@ -103,23 +254,36 @@
             <table>
               <thead>
                 <tr>
-                  <th>From</th>
-                  <th>To</th>
+                  <th>From → To</th>
                   <th>Departure</th>
                   <th>Driver</th>
-                  <th>Booked At</th>
                   <th>Status</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
                 <% bookings.forEach(b => { %>
                   <tr>
-                    <td><%= b.Origin %></td>
-                    <td><%= b.Destination %></td>
-                    <td><%= new Date(b.DepartureTime).toLocaleString('en-PK', {dateStyle:'medium', timeStyle:'short'}) %></td>
+                    <td><strong style="color:var(--gray-900)"><%= b.Origin %> → <%= b.Destination %></strong></td>
+                    <td style="font-size:0.85rem"><%= new Date(b.DepartureTime).toLocaleString('en-PK', {dateStyle:'medium', timeStyle:'short'}) %></td>
                     <td><%= b.DriverName %></td>
-                    <td style="color:var(--gray-500, var(--gray-600));font-size:0.8rem"><%= new Date(b.BookingTime).toLocaleDateString('en-PK', {dateStyle:'medium'}) %></td>
-                    <td><span class="badge badge-<%= b.BookingStatus %>"><%= b.BookingStatus %></span></td>
+                    <td>
+                      <span class="badge badge-<%= b.BookingStatus %>"><%= b.BookingStatus %></span>
+                      <% if (b.FareStatus === 'countered') { %>
+                        <div style="margin-top:3px"><span class="nego-status-countered">Counter offer!</span></div>
+                      <% } else if (b.FareStatus === 'proposed') { %>
+                        <div style="margin-top:3px"><span class="nego-status-proposed">Awaiting driver</span></div>
+                      <% } %>
+                    </td>
+                    <td>
+                      <% if (b.FareStatus === 'countered') { %>
+                        <a href="/passenger/fare-response/<%= b.BookingID %>" class="btn btn-primary btn-sm">Review Offer</a>
+                      <% } else if (b.BookingStatus === 'confirmed') { %>
+                        <a href="/passenger/payment/<%= b.BookingID %>" class="btn btn-secondary btn-sm">Pay / View</a>
+                      <% } else { %>
+                        <span style="color:var(--gray-300);font-size:0.8rem">—</span>
+                      <% } %>
+                    </td>
                   </tr>
                 <% }) %>
               </tbody>
@@ -130,6 +294,92 @@
 
     </div>
   </div>
+
+  <script>
+    var searchForm = document.getElementById('search-form');
+    var searchBtn  = document.getElementById('search-btn');
+    var container  = document.getElementById('results-container');
+    var list       = document.getElementById('results-list');
+    var label      = document.getElementById('results-label');
+
+    searchForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      var originID      = document.getElementById('originID').value;
+      var destinationID = document.getElementById('destinationID').value;
+      if (!originID || !destinationID) return;
+
+      searchBtn.disabled = true;
+      searchBtn.textContent = 'Searching…';
+
+      fetch('/passenger/search-rides?originID=' + originID + '&destinationID=' + destinationID)
+        .then(function(r) { return r.json(); })
+        .then(function(data) { renderResults(data.rides || []); })
+        .catch(function() {
+          list.innerHTML = '<p style="color:var(--red);font-size:0.875rem">Failed to fetch rides. Please try again.</p>';
+          container.classList.remove('hidden');
+        })
+        .finally(function() {
+          searchBtn.disabled = false;
+          searchBtn.textContent = 'Search Rides';
+        });
+    });
+
+    function renderResults(rides) {
+      list.innerHTML = '';
+      container.classList.remove('hidden');
+
+      if (!rides || rides.length === 0) {
+        label.textContent = 'No rides found';
+        list.innerHTML = '<p style="color:var(--gray-500);font-size:0.875rem;text-align:center;padding:20px 0">No available rides for this route. Try a different route or check back later.</p>';
+        return;
+      }
+
+      label.textContent = rides.length + ' ride' + (rides.length !== 1 ? 's' : '') + ' available';
+
+      rides.forEach(function(r) {
+        var dep       = new Date(r.DepartureTime).toLocaleString('en-PK', { dateStyle: 'medium', timeStyle: 'short' });
+        var suggested = 200;
+
+        var card = document.createElement('div');
+        card.className = 'ride-result-card';
+        card.innerHTML =
+          '<div class="ride-result-top">' +
+            '<div class="ride-info">' +
+              '<div class="ride-route">' + escHtml(r.OriginName) + ' → ' + escHtml(r.DestinationName) + '</div>' +
+              '<div class="ride-meta">' +
+                '<span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' + dep + '</span>' +
+                '<span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' + escHtml(r.DriverName) + '</span>' +
+                '<span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v3h-7V8z"/></svg>' + escHtml(r.Make) + ' ' + escHtml(r.Model) + ' · ' + escHtml(r.PlateNumber) + '</span>' +
+              '</div>' +
+            '</div>' +
+            '<span class="ride-seats">' + r.AvailableSeats + ' seat' + (r.AvailableSeats !== 1 ? 's' : '') + '</span>' +
+          '</div>' +
+          '<form action="/passenger/book-ride/' + r.RideID + '" method="POST" class="fare-propose-row">' +
+            '<div class="fare-suggest">' +
+              '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/></svg>' +
+              'Suggested: Rs. 200–500 · Propose your fare:' +
+            '</div>' +
+            '<div class="fare-input-wrap">' +
+              '<span style="font-size:0.8rem;font-weight:600;color:var(--gray-500)">Rs.</span>' +
+              '<input type="number" name="proposedFare" value="' + suggested + '" min="1" step="1" class="fare-input" required>' +
+              '<button type="submit" class="btn btn-primary btn-sm" style="white-space:nowrap">Propose</button>' +
+            '</div>' +
+          '</form>';
+        list.appendChild(card);
+      });
+    }
+
+    function clearResults() {
+      container.classList.add('hidden');
+      list.innerHTML = '';
+    }
+
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+  </script>
 
 </body>
 </html>

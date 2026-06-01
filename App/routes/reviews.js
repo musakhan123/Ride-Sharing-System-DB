@@ -61,6 +61,41 @@ router.post('/', requireRole('passenger'), async (req, res) => {
   }
 });
 
+// POST /reviews/submit — form-based review submission (passengers with completed bookings only)
+router.post('/submit', requireRole('passenger'), async (req, res) => {
+  const { rideId, rating, comment } = req.body;
+  const passengerId = req.session.user.UserID;
+  const parsedRating = parseInt(rating);
+
+  if (!rideId || !parsedRating || parsedRating < 1 || parsedRating > 5) {
+    return res.redirect('/passenger/reviews?error=invalid_input');
+  }
+
+  try {
+    const [bookings] = await db.query(
+      `SELECT b.BookingID, r.DriverID FROM BOOKINGS b
+       JOIN RIDES r ON b.RideID = r.RideID
+       WHERE b.RideID = ? AND b.PassengerID = ? AND b.Status = 'completed'`,
+      [rideId, passengerId]
+    );
+    if (bookings.length === 0) return res.redirect('/passenger/reviews?error=not_eligible');
+
+    const [existing] = await db.query(
+      'SELECT ReviewID FROM REVIEWS WHERE RideID = ? AND PassengerID = ?',
+      [rideId, passengerId]
+    );
+    if (existing.length > 0) return res.redirect('/passenger/reviews?error=already_reviewed');
+
+    await db.query(
+      'INSERT INTO REVIEWS (RideID, PassengerID, DriverID, Rating, Comment, ReviewDate) VALUES (?, ?, ?, ?, ?, NOW())',
+      [rideId, passengerId, bookings[0].DriverID, parsedRating, comment || null]
+    );
+    res.redirect('/passenger/reviews?submitted=1');
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
 // GET /reviews/driver/:driverId — view all reviews for a driver
 router.get('/driver/:driverId', requireLogin, async (req, res) => {
   const { driverId } = req.params;

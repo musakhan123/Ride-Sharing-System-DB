@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Booking Confirmed - Ride Sharing System</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .confirm-layout {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+    .success-banner {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 20px 24px;
+      background: #d1fae5;
+      border: 1px solid #6ee7b7;
+      border-radius: var(--radius-lg);
+      margin-bottom: 24px;
+    }
+    .success-icon {
+      width: 44px; height: 44px;
+      background: #059669;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      color: white;
+    }
+    .success-banner h2 { font-size: 1.15rem; font-weight: 700; color: #065f46; margin: 0 0 2px; }
+    .success-banner p  { font-size: 0.85rem; color: #047857; margin: 0; }
+
+    .confirm-card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    .confirm-card-header {
+      padding: 16px 22px;
+      border-bottom: 1px solid var(--gray-100);
+      display: flex; align-items: center; gap: 10px;
+      background: var(--gray-50);
+    }
+    .confirm-card-header h3 { font-size: 0.95rem; font-weight: 700; color: var(--gray-800); margin: 0; }
+    .confirm-card-body { padding: 20px 22px; }
+
+    .route-block {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 16px;
+      background: var(--blue-50);
+      border-radius: var(--radius);
+      border: 1px solid var(--blue-100, #dbeafe);
+      margin-bottom: 18px;
+    }
+    .route-loc { flex: 1; text-align: center; }
+    .route-loc strong { display: block; font-size: 1rem; color: var(--blue-700, #1d4ed8); }
+    .route-loc span   { font-size: 0.72rem; color: var(--blue-500, #3b82f6); }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+    }
+    .info-item {
+      padding: 10px 0;
+      border-bottom: 1px solid var(--gray-100);
+      font-size: 0.875rem;
+    }
+    .info-item:nth-last-child(-n+2) { border-bottom: none; }
+    .info-label { color: var(--gray-500); font-size: 0.78rem; margin-bottom: 2px; }
+    .info-value { color: var(--gray-900); font-weight: 600; }
+
+    .receipt-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--gray-100);
+      font-size: 0.875rem;
+    }
+    .receipt-row:last-child { border-bottom: none; }
+    .receipt-row .label { color: var(--gray-500); }
+    .receipt-row .value { color: var(--gray-900); font-weight: 600; }
+    .receipt-total {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 0 0;
+      border-top: 2px solid var(--gray-200);
+      margin-top: 6px;
+    }
+    .receipt-total .label { font-size: 0.95rem; font-weight: 700; color: var(--gray-800); }
+    .receipt-total .value { font-size: 1.1rem; font-weight: 800; color: var(--blue-600); }
+
+    .action-row {
+      display: flex; gap: 12px; flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+
+  <%- include('partials/navbar') %>
+
+  <div class="page-wrapper">
+    <div class="confirm-layout">
+
+      <!-- ── Success banner ──────────────────────────────────── -->
+      <div class="success-banner">
+        <div class="success-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div>
+          <h2>Booking Confirmed!</h2>
+          <p>Your ride has been booked and payment recorded. See you on the road.</p>
+        </div>
+      </div>
+
+      <!-- ── Booking Details ─────────────────────────────────── -->
+      <div class="confirm-card">
+        <div class="confirm-card-header">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue-600)" stroke-width="2">
+            <rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v3h-7V8z"/>
+            <circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+          </svg>
+          <h3>Ride Details</h3>
+          <span class="booking-id-badge" style="display:inline-flex;align-items:center;gap:4px;background:var(--gray-100);color:var(--gray-500);font-size:0.7rem;font-weight:700;padding:3px 8px;border-radius:999px;margin-left:auto">
+            Booking #<%= booking.BookingID %>
+          </span>
+        </div>
+        <div class="confirm-card-body">
+          <div class="route-block">
+            <div class="route-loc">
+              <strong><%= booking.Origin %></strong>
+              <span><%= booking.OriginCity %></span>
+            </div>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--blue-400,#60a5fa)" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            <div class="route-loc">
+              <strong><%= booking.Destination %></strong>
+              <span><%= booking.DestinationCity %></span>
+            </div>
+          </div>
+
+          <div class="info-grid">
+            <div class="info-item">
+              <div class="info-label">Departure</div>
+              <div class="info-value"><%= new Date(booking.DepartureTime).toLocaleString('en-PK', {dateStyle:'medium', timeStyle:'short'}) %></div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Booking Status</div>
+              <div><span class="badge badge-<%= booking.BookingStatus %>"><%= booking.BookingStatus %></span></div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Driver</div>
+              <div class="info-value"><%= booking.DriverName %></div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Driver Phone</div>
+              <div class="info-value"><%= booking.DriverPhone %></div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Vehicle</div>
+              <div class="info-value"><%= booking.Make %> <%= booking.Model %> (<%= booking.Color %>)</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Plate Number</div>
+              <div><code style="background:var(--gray-100);padding:2px 7px;border-radius:4px;font-size:0.8rem"><%= booking.PlateNumber %></code></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Payment Receipt ─────────────────────────────────── -->
+      <% if (booking.PaymentID) { %>
+      <div class="confirm-card">
+        <div class="confirm-card-header">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2">
+            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+          </svg>
+          <h3>Payment Receipt</h3>
+          <span style="display:inline-flex;align-items:center;gap:4px;background:#d1fae5;color:#059669;font-size:0.7rem;font-weight:700;padding:3px 8px;border-radius:999px;margin-left:auto">
+            #<%= booking.PaymentID %>
+          </span>
+        </div>
+        <div class="confirm-card-body">
+          <div class="receipt-row">
+            <span class="label">Payment Method</span>
+            <span class="value" style="text-transform:capitalize"><%= booking.Method %></span>
+          </div>
+          <div class="receipt-row">
+            <span class="label">Payment Status</span>
+            <span class="badge badge-<%= booking.PaymentStatus === 'completed' ? 'active' : booking.PaymentStatus %>"><%= booking.PaymentStatus %></span>
+          </div>
+          <div class="receipt-row">
+            <span class="label">Payment Date</span>
+            <span class="value"><%= new Date(booking.PaymentDate).toLocaleString('en-PK', {dateStyle:'medium', timeStyle:'short'}) %></span>
+          </div>
+          <div class="receipt-total">
+            <span class="label">Total Paid</span>
+            <span class="value">Rs. <%= Number(booking.Amount).toLocaleString('en-PK') %></span>
+          </div>
+        </div>
+      </div>
+      <% } else { %>
+      <div class="confirm-card">
+        <div class="confirm-card-body" style="text-align:center;padding:28px">
+          <p style="color:var(--gray-500);margin:0 0 14px;font-size:0.875rem">No payment recorded yet.</p>
+          <a href="/passenger/payment/<%= booking.BookingID %>" class="btn btn-primary btn-sm">Pay Now →</a>
+        </div>
+      </div>
+      <% } %>
+
+      <!-- ── Actions ─────────────────────────────────────────── -->
+      <div class="action-row" style="margin-top:4px">
+        <a href="/passenger/my-bookings" class="btn btn-primary">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          View My Bookings
+        </a>
+        <a href="/passenger/dashboard" class="btn btn-secondary">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          Go to Dashboard
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>

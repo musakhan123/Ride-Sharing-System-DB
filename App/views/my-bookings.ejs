@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Bookings - Ride Sharing System</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .action-cell { display: flex; flex-direction: column; gap: 5px; align-items: flex-start; }
+    .action-cell-row { display: flex; gap: 5px; }
+    .route-cell strong { display: block; font-size: 0.875rem; color: var(--gray-900); }
+    .route-cell span   { font-size: 0.75rem; color: var(--gray-500); }
+    .fare-pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 8px; border-radius: 999px; font-size: 0.72rem; font-weight: 700;
+    }
+    .fare-pill.proposed  { background:#fef9c3; color:#92400e; }
+    .fare-pill.countered { background:#dbeafe; color:#1d4ed8; }
+    .fare-pill.approved  { background:#d1fae5; color:#065f46; }
+    .fare-pill.rejected  { background:#fee2e2; color:#991b1b; }
+  </style>
+</head>
+<body>
+
+  <%- include('partials/navbar') %>
+
+  <div class="page-wrapper">
+
+    <div class="page-header">
+      <h1>My Bookings</h1>
+      <p>All your ride bookings and payment history, <%= user.Name %>.</p>
+    </div>
+
+    <!-- ── Flash messages ───────────────────────────────────────── -->
+    <% if (cancelled) { %>
+      <div class="alert alert-success">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        Booking cancelled successfully.
+      </div>
+    <% } %>
+    <% if (error === 'not_found') { %>
+      <div class="alert alert-error">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Booking not found or already cancelled.
+      </div>
+    <% } else if (error === 'ride_full') { %>
+      <div class="alert alert-error">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        No seats available on that ride anymore.
+      </div>
+    <% } %>
+
+    <!-- ── Stats ─────────────────────────────────────────────────── -->
+    <div class="stats-grid" style="margin-bottom:28px">
+      <div class="stat-card">
+        <div class="stat-label">Total Bookings</div>
+        <div class="stat-value"><%= bookings.length %></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Confirmed</div>
+        <div class="stat-value green"><%= bookings.filter(b => b.BookingStatus === 'confirmed').length %></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Pending</div>
+        <div class="stat-value yellow"><%= bookings.filter(b => b.BookingStatus === 'pending').length %></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Payments Made</div>
+        <div class="stat-value" style="color:var(--blue-600)"><%= bookings.filter(b => b.PaymentStatus === 'completed').length %></div>
+      </div>
+    </div>
+
+    <!-- ── Bookings Table ─────────────────────────────────────────── -->
+    <div class="card full-width" style="padding:0">
+      <div class="card-header" style="padding:18px 22px">
+        <h2>All Bookings</h2>
+        <a href="/passenger/dashboard" class="btn btn-secondary btn-sm">← Dashboard</a>
+      </div>
+
+      <% if (bookings.length === 0) { %>
+        <div class="empty-state">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+          </svg>
+          <p>No bookings yet. <a href="/passenger/dashboard" style="color:var(--blue-600);font-weight:600">Search for a ride →</a></p>
+        </div>
+      <% } else { %>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Route</th>
+                <th>Departure</th>
+                <th>Driver / Vehicle</th>
+                <th>Booking</th>
+                <th>Fare Negotiation</th>
+                <th>Payment</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% bookings.forEach(function(b) { %>
+              <tr style="<%= b.BookingStatus === 'cancelled' ? 'opacity:0.6' : b.BookingStatus === 'pending' ? 'background:var(--blue-50)' : '' %>">
+
+                <td style="color:var(--gray-400);font-size:0.78rem">#<%= b.BookingID %></td>
+
+                <td class="route-cell">
+                  <strong><%= b.Origin %> → <%= b.Destination %></strong>
+                  <span><%= b.OriginCity %> → <%= b.DestinationCity %></span>
+                </td>
+
+                <td style="font-size:0.85rem;color:var(--gray-700);white-space:nowrap">
+                  <%= new Date(b.DepartureTime).toLocaleString('en-PK', {dateStyle:'medium', timeStyle:'short'}) %>
+                </td>
+
+                <td>
+                  <div style="font-weight:600;font-size:0.85rem;color:var(--gray-900)"><%= b.DriverName %></div>
+                  <div style="font-size:0.75rem;color:var(--gray-500)"><%= b.Make %> <%= b.Model %></div>
+                  <code style="background:var(--gray-100);padding:1px 6px;border-radius:4px;font-size:0.72rem"><%= b.PlateNumber %></code>
+                </td>
+
+                <td>
+                  <span class="badge badge-<%= b.BookingStatus %>"><%= b.BookingStatus %></span>
+                  <div style="font-size:0.72rem;color:var(--gray-400);margin-top:3px">
+                    <%= new Date(b.BookingTime).toLocaleDateString('en-PK', {dateStyle:'medium'}) %>
+                  </div>
+                </td>
+
+                <td>
+                  <% if (!b.FareStatus) { %>
+                    <span style="color:var(--gray-300);font-size:0.8rem">—</span>
+                  <% } else { %>
+                    <div style="display:flex;flex-direction:column;gap:4px">
+                      <div style="font-size:0.78rem;color:var(--gray-500)">
+                        Your offer: <strong style="color:var(--gray-800)">Rs. <%= Number(b.ProposedFare).toLocaleString('en-PK') %></strong>
+                      </div>
+                      <% if (b.DriverFare) { %>
+                        <div style="font-size:0.78rem;color:var(--gray-500)">
+                          Driver: <strong style="color:var(--gray-800)">Rs. <%= Number(b.DriverFare).toLocaleString('en-PK') %></strong>
+                        </div>
+                      <% } %>
+                      <span class="fare-pill <%= b.FareStatus %>">
+                        <% if (b.FareStatus === 'proposed') { %>Awaiting driver
+                        <% } else if (b.FareStatus === 'countered') { %>Counter offer
+                        <% } else if (b.FareStatus === 'approved') { %>Agreed
+                        <% } else { %>Rejected<% } %>
+                      </span>
+                    </div>
+                  <% } %>
+                </td>
+
+                <td>
+                  <% if (b.PaymentStatus === 'completed') { %>
+                    <span class="badge badge-active">Paid</span>
+                    <div style="font-size:0.78rem;color:var(--gray-700);font-weight:600;margin-top:3px">Rs. <%= Number(b.Amount).toLocaleString('en-PK') %></div>
+                    <div style="font-size:0.72rem;color:var(--gray-500);text-transform:capitalize"><%= b.Method %></div>
+                  <% } else if (b.PaymentStatus === 'failed') { %>
+                    <span class="badge badge-cancelled">Refunded</span>
+                  <% } else if (b.BookingStatus === 'confirmed') { %>
+                    <span class="badge badge-pending">Unpaid</span>
+                  <% } else { %>
+                    <span style="color:var(--gray-300);font-size:0.8rem">—</span>
+                  <% } %>
+                </td>
+
+                <td>
+                  <div class="action-cell">
+                    <% if (b.FareStatus === 'countered' && b.BookingStatus === 'pending') { %>
+                      <a href="/passenger/fare-response/<%= b.BookingID %>" class="btn btn-primary btn-sm">Review Offer</a>
+                      <form action="/passenger/cancel-booking/<%= b.BookingID %>" method="POST" style="margin:0"
+                            onsubmit="return confirm('Withdraw this booking?')">
+                        <button type="submit" class="btn btn-danger btn-sm">Withdraw</button>
+                      </form>
+
+                    <% } else if (b.FareStatus === 'proposed' && b.BookingStatus === 'pending') { %>
+                      <form action="/passenger/cancel-booking/<%= b.BookingID %>" method="POST" style="margin:0"
+                            onsubmit="return confirm('Withdraw this fare proposal?')">
+                        <button type="submit" class="btn btn-secondary btn-sm">Withdraw</button>
+                      </form>
+
+                    <% } else if (b.BookingStatus === 'confirmed' && b.PaymentStatus === 'completed') { %>
+                      <div class="action-cell-row">
+                        <a href="/passenger/confirmation/<%= b.BookingID %>" class="btn btn-secondary btn-sm">Receipt</a>
+                        <form action="/passenger/cancel-booking/<%= b.BookingID %>" method="POST" style="margin:0"
+                              onsubmit="return confirm('Cancel this booking? This cannot be undone.')">
+                          <button type="submit" class="btn btn-danger btn-sm">Cancel</button>
+                        </form>
+                      </div>
+
+                    <% } else if (b.BookingStatus === 'confirmed') { %>
+                      <div class="action-cell-row">
+                        <a href="/passenger/payment/<%= b.BookingID %>" class="btn btn-primary btn-sm">Pay Now</a>
+                        <form action="/passenger/cancel-booking/<%= b.BookingID %>" method="POST" style="margin:0"
+                              onsubmit="return confirm('Cancel this booking?')">
+                          <button type="submit" class="btn btn-danger btn-sm">Cancel</button>
+                        </form>
+                      </div>
+
+                    <% } else { %>
+                      <span style="color:var(--gray-300);font-size:0.8rem">—</span>
+                    <% } %>
+                  </div>
+                </td>
+
+              </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+
+  </div>
+
+</body>
+</html>

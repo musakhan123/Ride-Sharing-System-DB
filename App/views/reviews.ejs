@@ -5,6 +5,64 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Reviews - Ride Sharing System</title>
   <link rel="stylesheet" href="/css/style.css">
+  <style>
+    /* ── Filter Pills ──────────────────────────────────────────────── */
+    .filter-bar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:22px; }
+    .filter-btn {
+      padding:5px 16px; border-radius:999px; border:1.5px solid var(--gray-200);
+      background:var(--white); color:var(--gray-600); font-size:0.82rem;
+      font-weight:600; cursor:pointer; transition:all 0.15s; line-height:1.6;
+    }
+    .filter-btn:hover { border-color:var(--blue-500); color:var(--blue-600); }
+    .filter-btn.active { background:var(--blue-600); color:var(--white); border-color:var(--blue-600); }
+
+    /* ── Rating bar in stats ───────────────────────────────────────── */
+    .rating-bar-wrap { margin-top:16px; display:flex; flex-direction:column; gap:5px; }
+    .rating-bar-row  { display:flex; align-items:center; gap:8px; font-size:0.78rem; }
+    .rating-bar-row span:first-child { width:20px; text-align:right; color:var(--gray-600); font-weight:600; }
+    .rating-bar { flex:1; height:8px; background:var(--gray-100); border-radius:999px; overflow:hidden; }
+    .rating-bar-fill { height:100%; background:var(--yellow); border-radius:999px; transition:width 0.4s ease; }
+    .rating-bar-count { width:24px; text-align:right; color:var(--gray-400); font-size:0.75rem; }
+
+    /* ── Write Review card ─────────────────────────────────────────── */
+    .write-review-card {
+      background:var(--white); border:1.5px solid var(--blue-100);
+      border-radius:var(--radius-lg); padding:28px; box-shadow:var(--shadow-sm);
+      margin-bottom:28px;
+    }
+    .write-review-card h2 {
+      font-size:1rem; font-weight:700; color:var(--gray-900);
+      margin:0 0 20px; padding-bottom:12px; border-bottom:1px solid var(--gray-100);
+      display:flex; align-items:center; gap:8px;
+    }
+
+    /* ── Star Picker ───────────────────────────────────────────────── */
+    .star-picker { display:flex; gap:6px; margin:4px 0 6px; }
+    .sp-star {
+      font-size:2.2rem; background:none; border:none; cursor:pointer; padding:0;
+      color:var(--gray-200); transition:color 0.1s, transform 0.1s; line-height:1;
+      user-select:none;
+    }
+    .sp-star:hover, .sp-star.sp-hover { color:var(--yellow); transform:scale(1.15); }
+    .sp-star.sp-on { color:var(--yellow); }
+    .sp-label {
+      font-size:0.82rem; color:var(--gray-500); font-weight:600;
+      margin-left:2px; min-height:1.2em;
+    }
+
+    /* ── Review cards ──────────────────────────────────────────────── */
+    .review-card { transition:box-shadow 0.15s; }
+    .review-card:hover { box-shadow:var(--shadow-md); }
+    .rating-badge {
+      display:inline-flex; align-items:center; gap:3px;
+      padding:2px 8px; border-radius:6px; font-size:0.78rem; font-weight:700;
+    }
+    .rb-5 { background:#d1fae5; color:#065f46; }
+    .rb-4 { background:#d1fae5; color:#065f46; }
+    .rb-3 { background:#fef9c3; color:#92400e; }
+    .rb-2 { background:#fee2e2; color:#991b1b; }
+    .rb-1 { background:#fee2e2; color:#991b1b; }
+  </style>
 </head>
 <body>
 
@@ -12,21 +70,30 @@
 
   <div class="page-wrapper">
 
+    <!-- ── Page header ────────────────────────────────────────────── -->
     <div class="page-header">
       <h1>Driver Reviews</h1>
-      <p>Ratings and feedback from our community of drivers and passengers</p>
+      <p>Honest ratings from passengers who completed their rides.</p>
     </div>
 
-    <% if (reviews.length === 0) { %>
-      <div class="card">
-        <div class="empty-state" style="padding:60px 20px">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-          <p style="font-size:1rem;margin-top:8px">No reviews yet. Be the first to leave one!</p>
-        </div>
+    <!-- ── Flash messages ─────────────────────────────────────────── -->
+    <% if (typeof submitted !== 'undefined' && submitted) { %>
+      <div class="alert alert-success">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        Your review was submitted successfully. Thank you!
       </div>
-    <% } else { %>
+    <% } %>
+    <% const _errMap = { invalid_input:'Please select a ride and choose a star rating.', not_eligible:'You can only review rides you have completed.', already_reviewed:'You have already submitted a review for this ride.' }; %>
+    <% if (typeof reviewError !== 'undefined' && reviewError && _errMap[reviewError]) { %>
+      <div class="alert alert-error">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        <%= _errMap[reviewError] %>
+      </div>
+    <% } %>
 
-      <!-- Summary bar -->
+    <% if (reviews.length > 0) { %>
+      <!-- ── Stats row ─────────────────────────────────────────────── -->
+      <% const avgRating = (reviews.reduce((s,r) => s + r.Rating, 0) / reviews.length); %>
       <div class="stats-grid" style="margin-bottom:28px">
         <div class="stat-card">
           <div class="stat-label">Total Reviews</div>
@@ -34,40 +101,132 @@
         </div>
         <div class="stat-card">
           <div class="stat-label">Average Rating</div>
-          <div class="stat-value yellow">
-            <%= (reviews.reduce((s,r) => s + r.Rating, 0) / reviews.length).toFixed(1) %>
+          <div style="display:flex;align-items:baseline;gap:8px;margin-top:4px">
+            <span class="stat-value yellow"><%= avgRating.toFixed(1) %></span>
+            <div class="stars">
+              <% for (let i = 1; i <= 5; i++) { %>
+                <span class="star <%= i <= Math.round(avgRating) ? 'filled' : '' %>">&#9733;</span>
+              <% } %>
+            </div>
           </div>
         </div>
         <div class="stat-card">
           <div class="stat-label">5-Star Reviews</div>
           <div class="stat-value green"><%= reviews.filter(r => r.Rating === 5).length %></div>
         </div>
+        <div class="stat-card">
+          <div class="stat-label">Rating Breakdown</div>
+          <div class="rating-bar-wrap">
+            <% for (let s = 5; s >= 1; s--) { %>
+              <% const cnt = reviews.filter(r => r.Rating === s).length; %>
+              <% const pct = reviews.length ? Math.round(cnt / reviews.length * 100) : 0; %>
+              <div class="rating-bar-row">
+                <span><%= s %></span>
+                <div class="rating-bar"><div class="rating-bar-fill" style="width:<%= pct %>%"></div></div>
+                <span class="rating-bar-count"><%= cnt %></span>
+              </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    <% } %>
+
+    <!-- ── Write a Review (eligible passengers only) ──────────────── -->
+    <% if (typeof eligibleRides !== 'undefined' && eligibleRides && eligibleRides.length > 0) { %>
+      <div class="write-review-card">
+        <h2>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue-600)" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          Write a Review
+        </h2>
+        <form action="/reviews/submit" method="POST" id="review-form">
+          <div class="form-grid" style="margin-bottom:16px">
+            <div class="form-group">
+              <label>Select Ride</label>
+              <select name="rideId" required>
+                <option value="">Choose a completed ride…</option>
+                <% eligibleRides.forEach(r => { %>
+                  <option value="<%= r.RideID %>">
+                    <%= r.Origin %> → <%= r.Destination %> &middot;
+                    <%= new Date(r.DepartureTime).toLocaleDateString('en-PK', {dateStyle:'medium'}) %> &middot;
+                    Driver: <%= r.DriverName %>
+                  </option>
+                <% }) %>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Your Rating</label>
+              <div class="star-picker" id="starPicker">
+                <button type="button" class="sp-star" data-v="1" title="Terrible">★</button>
+                <button type="button" class="sp-star" data-v="2" title="Poor">★</button>
+                <button type="button" class="sp-star" data-v="3" title="Average">★</button>
+                <button type="button" class="sp-star" data-v="4" title="Good">★</button>
+                <button type="button" class="sp-star" data-v="5" title="Excellent">★</button>
+              </div>
+              <span class="sp-label" id="spLabel">Click a star to rate</span>
+              <input type="hidden" name="rating" id="ratingVal">
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:18px">
+            <label>Comment <span style="color:var(--gray-400);font-weight:400">(optional)</span></label>
+            <textarea name="comment" rows="3" style="resize:vertical" placeholder="Share what you liked or could be improved…"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" id="submitReviewBtn" style="width:auto;padding:10px 28px" disabled>
+            Submit Review
+          </button>
+          <span style="font-size:0.8rem;color:var(--gray-400);margin-left:12px" id="submitHint">Select a ride and rating to continue</span>
+        </form>
+      </div>
+    <% } %>
+
+    <!-- ── Reviews list ────────────────────────────────────────────── -->
+    <% if (reviews.length === 0) { %>
+      <div class="card">
+        <div class="empty-state" style="padding:64px 20px">
+          <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" style="color:var(--gray-200)">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+          <p style="font-size:0.95rem;color:var(--gray-500);margin-top:10px">No reviews yet. Be the first to leave one!</p>
+        </div>
+      </div>
+    <% } else { %>
+
+      <!-- Filter pills -->
+      <div class="filter-bar">
+        <button class="filter-btn active" onclick="filterRating(0, this)">All</button>
+        <button class="filter-btn" onclick="filterRating(5, this)">★★★★★ 5</button>
+        <button class="filter-btn" onclick="filterRating(4, this)">★★★★☆ 4</button>
+        <button class="filter-btn" onclick="filterRating(3, this)">★★★☆☆ 3</button>
+        <button class="filter-btn" onclick="filterRating(2, this)">★★☆☆☆ 2</button>
+        <button class="filter-btn" onclick="filterRating(1, this)">★☆☆☆☆ 1</button>
       </div>
 
-      <div class="reviews-list">
+      <div class="reviews-list" id="reviewsList">
         <% reviews.forEach(r => { %>
-          <div class="review-card">
+          <div class="review-card" data-rating="<%= r.Rating %>">
             <div class="review-header">
               <div class="review-meta">
                 <div class="review-names">
                   <strong><%= r.PassengerName %></strong>
                   <span style="color:var(--gray-400);font-weight:400"> reviewed </span>
-                  <strong><%= r.DriverName %></strong>
+                  <strong style="color:var(--blue-700)"><%= r.DriverName %></strong>
                 </div>
-                <div class="review-route">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:middle"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <div class="review-route" style="margin-top:3px">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:middle;margin-right:3px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                   <%= r.Origin %> &rarr; <%= r.Destination %>
                 </div>
-                <div class="stars" style="margin-top:4px">
-                  <% for (let i = 1; i <= 5; i++) { %>
-                    <span class="star <%= i <= r.Rating ? 'filled' : '' %>">&#9733;</span>
-                  <% } %>
-                  <span style="font-size:0.78rem;color:var(--gray-500, var(--gray-600));margin-left:6px;font-weight:600"><%= r.Rating %>/5</span>
+                <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
+                  <div class="stars">
+                    <% for (let i = 1; i <= 5; i++) { %>
+                      <span class="star <%= i <= r.Rating ? 'filled' : '' %>">&#9733;</span>
+                    <% } %>
+                  </div>
+                  <span class="rating-badge rb-<%= r.Rating %>"><%= r.Rating %>/5</span>
                 </div>
               </div>
-              <div class="review-date"><%= new Date(r.ReviewDate).toLocaleDateString('en-PK', {dateStyle: 'medium'}) %></div>
+              <div class="review-date" style="flex-shrink:0">
+                <%= new Date(r.ReviewDate).toLocaleDateString('en-PK', {dateStyle:'medium'}) %>
+              </div>
             </div>
-
             <% if (r.Comment) { %>
               <div class="review-comment">"<%= r.Comment %>"</div>
             <% } %>
@@ -75,8 +234,72 @@
         <% }) %>
       </div>
 
+      <div id="noResults" style="display:none">
+        <div class="card">
+          <div class="empty-state" style="padding:40px 20px">
+            <p>No reviews match that rating filter.</p>
+          </div>
+        </div>
+      </div>
+
     <% } %>
   </div>
+
+  <script>
+    // ── Rating filter ───────────────────────────────────────────────
+    function filterRating(rating, btn) {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      var cards  = document.querySelectorAll('.review-card[data-rating]');
+      var visible = 0;
+      cards.forEach(function(c) {
+        var show = rating === 0 || +c.dataset.rating === rating;
+        c.style.display = show ? '' : 'none';
+        if (show) visible++;
+      });
+      var noRes = document.getElementById('noResults');
+      if (noRes) noRes.style.display = visible === 0 ? '' : 'none';
+    }
+
+    // ── Star picker ─────────────────────────────────────────────────
+    (function () {
+      var picker  = document.getElementById('starPicker');
+      if (!picker) return;
+      var stars   = picker.querySelectorAll('.sp-star');
+      var input   = document.getElementById('ratingVal');
+      var label   = document.getElementById('spLabel');
+      var submitBtn = document.getElementById('submitReviewBtn');
+      var hint    = document.getElementById('submitHint');
+      var labels  = ['', 'Terrible', 'Poor', 'Average', 'Good', 'Excellent'];
+      var current = 0;
+
+      function paint(n, cls) {
+        stars.forEach(function(s, i) { s.classList.toggle(cls, i < n); });
+      }
+
+      stars.forEach(function(s) {
+        s.addEventListener('click', function() {
+          current = +s.dataset.v;
+          input.value = current;
+          paint(current, 'sp-on');
+          label.textContent = labels[current] + ' (' + current + '/5)';
+          label.style.color = 'var(--gray-800)';
+          checkReady();
+        });
+        s.addEventListener('mouseenter', function() { paint(+s.dataset.v, 'sp-hover'); });
+        s.addEventListener('mouseleave', function() { paint(0, 'sp-hover'); });
+      });
+
+      function checkReady() {
+        var rideOk = document.querySelector('select[name="rideId"]').value !== '';
+        var rateOk = current > 0;
+        submitBtn.disabled = !(rideOk && rateOk);
+        hint.style.display = (rideOk && rateOk) ? 'none' : '';
+      }
+
+      document.querySelector('select[name="rideId"]').addEventListener('change', checkReady);
+    })();
+  </script>
 
 </body>
 </html>

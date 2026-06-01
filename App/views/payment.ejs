@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment - Ride Sharing System</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .payment-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+    @media (max-width: 640px) { .payment-layout { grid-template-columns: 1fr; } }
+
+    .summary-card, .pay-card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+    .card-top {
+      padding: 18px 22px 14px;
+      border-bottom: 1px solid var(--gray-100);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .card-top-icon {
+      width: 36px; height: 36px;
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .card-top-icon.blue  { background: var(--blue-50);  color: var(--blue-600); }
+    .card-top-icon.green { background: #d1fae5; color: #059669; }
+    .card-top h2 { font-size: 1rem; font-weight: 700; color: var(--gray-900); margin: 0; }
+
+    .card-body-pad { padding: 22px; }
+
+    .route-display {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      padding: 14px 16px;
+      background: var(--blue-50);
+      border-radius: var(--radius);
+      border: 1px solid var(--blue-100, #dbeafe);
+    }
+    .route-city {
+      font-size: 1rem; font-weight: 700; color: var(--blue-700, #1d4ed8); text-align: center; flex: 1;
+    }
+    .route-arrow { color: var(--blue-400, #60a5fa); flex-shrink: 0; }
+
+    .detail-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--gray-100);
+      font-size: 0.875rem;
+    }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-label { color: var(--gray-500); }
+    .detail-value { color: var(--gray-900); font-weight: 600; }
+
+    .method-options { display: flex; gap: 12px; margin-bottom: 20px; }
+    .method-label {
+      flex: 1;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 8px;
+      padding: 16px 12px;
+      border: 2px solid var(--gray-200);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--gray-600);
+      text-align: center;
+    }
+    .method-label input { display: none; }
+    .method-label:has(input:checked) {
+      border-color: var(--blue-600);
+      background: var(--blue-50);
+      color: var(--blue-700, #1d4ed8);
+    }
+    .method-label svg { opacity: 0.6; }
+    .method-label:has(input:checked) svg { opacity: 1; }
+
+    .booking-id-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: var(--gray-100); color: var(--gray-500);
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 0.5px;
+      padding: 3px 8px; border-radius: 999px;
+    }
+  </style>
+</head>
+<body>
+
+  <%- include('partials/navbar') %>
+
+  <div class="page-wrapper">
+
+    <div class="page-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <h1>Complete Payment</h1>
+        <span class="booking-id-badge">Booking #<%= booking.BookingID %></span>
+      </div>
+      <p>Review your booking and choose a payment method.</p>
+    </div>
+
+    <% if (error === 'invalid_input') { %>
+      <div class="alert alert-error" style="max-width:860px;margin:0 auto 20px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Please enter a valid amount and select a payment method.
+      </div>
+    <% } %>
+
+    <div class="payment-layout">
+
+      <!-- ── Booking Summary ───────────────────────────────────── -->
+      <div class="summary-card">
+        <div class="card-top">
+          <div class="card-top-icon blue">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v3h-7V8z"/>
+              <circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+            </svg>
+          </div>
+          <h2>Booking Summary</h2>
+        </div>
+        <div class="card-body-pad">
+          <div class="route-display">
+            <div class="route-city"><%= booking.Origin %><br><span style="font-size:0.72rem;font-weight:400;color:var(--blue-500, #3b82f6)"><%= booking.OriginCity %></span></div>
+            <div class="route-arrow">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </div>
+            <div class="route-city"><%= booking.Destination %><br><span style="font-size:0.72rem;font-weight:400;color:var(--blue-500, #3b82f6)"><%= booking.DestinationCity %></span></div>
+          </div>
+
+          <div class="detail-row">
+            <span class="detail-label">Departure</span>
+            <span class="detail-value"><%= new Date(booking.DepartureTime).toLocaleString('en-PK', {dateStyle:'medium', timeStyle:'short'}) %></span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Driver</span>
+            <span class="detail-value"><%= booking.DriverName %></span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Phone</span>
+            <span class="detail-value"><%= booking.DriverPhone %></span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Vehicle</span>
+            <span class="detail-value"><%= booking.Make %> <%= booking.Model %></span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Plate</span>
+            <span class="detail-value"><code style="background:var(--gray-100);padding:2px 7px;border-radius:4px;font-size:0.8rem"><%= booking.PlateNumber %></code></span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Booking Status</span>
+            <span class="badge badge-<%= booking.BookingStatus %>"><%= booking.BookingStatus %></span>
+          </div>
+          <div class="detail-row" style="border-bottom:none">
+            <span class="detail-label">Booked At</span>
+            <span class="detail-value" style="font-weight:400;color:var(--gray-500);font-size:0.8rem">
+              <%= new Date(booking.BookingTime).toLocaleString('en-PK', {dateStyle:'medium', timeStyle:'short'}) %>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Payment Form ──────────────────────────────────────── -->
+      <div class="pay-card">
+        <div class="card-top">
+          <div class="card-top-icon green">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+            </svg>
+          </div>
+          <h2>Payment Details</h2>
+        </div>
+        <div class="card-body-pad">
+          <form action="/passenger/payment/<%= booking.BookingID %>" method="POST">
+
+            <div class="form-group" style="margin-bottom:20px">
+              <label style="font-size:0.85rem;font-weight:600;color:var(--gray-700);margin-bottom:8px;display:block">
+                Payment Method
+              </label>
+              <div class="method-options">
+                <label class="method-label">
+                  <input type="radio" name="method" value="cash" checked>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/>
+                    <path d="M6 12h.01M18 12h.01"/>
+                  </svg>
+                  Cash
+                </label>
+                <label class="method-label">
+                  <input type="radio" name="method" value="online">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+                  </svg>
+                  Online
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:24px">
+              <label style="font-size:0.85rem;font-weight:600;color:var(--gray-700);margin-bottom:8px;display:block">
+                Fare Amount (PKR)
+              </label>
+              <div style="position:relative">
+                <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--gray-400);font-weight:600;font-size:0.9rem">Rs.</span>
+                <input type="number" name="amount" min="1" step="0.01"
+                       placeholder="0.00"
+                       value="<%= booking.ProposedFare ? Number(booking.ProposedFare).toFixed(2) : '' %>"
+                       required
+                       style="width:100%;padding:10px 12px 10px 38px;border:1px solid var(--gray-200);border-radius:var(--radius);font-size:0.95rem;outline:none;box-sizing:border-box;transition:border-color 0.15s"
+                       onfocus="this.style.borderColor='var(--blue-400)'" onblur="this.style.borderColor='var(--gray-200)'">
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;gap:8px;padding:12px">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              Pay Now
+            </button>
+
+          </form>
+
+          <div style="margin-top:16px;text-align:center">
+            <a href="/passenger/my-bookings" style="font-size:0.8rem;color:var(--gray-400);text-decoration:none">
+              ← Back to My Bookings
+            </a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>

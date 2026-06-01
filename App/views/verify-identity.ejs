@@ -17,6 +17,16 @@
       <p>Submit a government-issued document to verify your identity.</p>
     </div>
 
+    <div style="margin-bottom:20px">
+      <a href="<%= user.Role === 'driver' ? '/driver/dashboard' : '/passenger/dashboard' %>"
+         style="display:inline-flex;align-items:center;gap:6px;font-size:0.875rem;font-weight:500;color:var(--gray-600);text-decoration:none">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+        Back to Dashboard
+      </a>
+    </div>
+
     <% if (success) { %>
       <div class="alert alert-success">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

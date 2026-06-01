@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Statistics - Ride Sharing System</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    /* ── Breakdown cards ─────────────────────────────────────────────── */
+    .breakdown-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 960px) { .breakdown-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 600px) { .breakdown-grid { grid-template-columns: 1fr; } }
+
+    .breakdown-card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      padding: 22px 24px;
+    }
+    .breakdown-head {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      color: var(--gray-400);
+      margin-bottom: 20px;
+    }
+    .brow {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+    .brow-label { font-size: 0.85rem; color: var(--gray-600); font-weight: 500; }
+    .brow-val   { font-size: 0.85rem; color: var(--gray-800); font-weight: 700; }
+    .brow-pct   { font-size: 0.75rem; color: var(--gray-400); margin-left: 6px; }
+
+    .bar-wrap { height: 5px; background: var(--gray-100); border-radius: 99px; overflow: hidden; margin-bottom: 16px; }
+    .bar-wrap:last-child { margin-bottom: 0; }
+    .bar { height: 5px; border-radius: 99px; min-width: 2px; }
+    .bar-blue   { background: var(--blue-600); }
+    .bar-purple { background: #7c3aed; }
+    .bar-green  { background: #059669; }
+    .bar-yellow { background: #d97706; }
+    .bar-red    { background: #dc2626; }
+    .bar-gray   { background: var(--gray-300); }
+
+    /* ── Recent tables grid ──────────────────────────────────────────── */
+    .tables-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 800px) { .tables-grid { grid-template-columns: 1fr; } }
+
+    /* ── Rating display ──────────────────────────────────────────────── */
+    .rating-display {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      margin-top: 2px;
+    }
+    .rating-num  { font-size: 2rem; font-weight: 800; color: var(--gray-900); line-height: 1; }
+    .rating-max  { font-size: 0.85rem; color: var(--gray-400); }
+    .stars       { display: flex; gap: 2px; align-items: center; margin-top: 6px; }
+    .star        { font-size: 1rem; line-height: 1; color: var(--gray-200); }
+    .star.filled { color: #f59e0b; }
+
+    /* ── Revenue highlight ───────────────────────────────────────────── */
+    .revenue-card {
+      background: linear-gradient(135deg, var(--blue-800) 0%, var(--blue-600) 100%);
+      border-radius: var(--radius-lg);
+      padding: 22px 24px;
+      color: var(--white);
+    }
+    .revenue-card .stat-label { color: rgba(255,255,255,0.7); font-size: 0.75rem; }
+    .revenue-card .revenue-val {
+      font-size: 2rem; font-weight: 800; line-height: 1.2;
+      margin: 6px 0 4px;
+    }
+    .revenue-card .revenue-sub { font-size: 0.78rem; color: rgba(255,255,255,0.65); }
+
+    /* ── Badge overrides for booking/user statuses ───────────────────── */
+    .badge-confirmed { background: #dbeafe; color: #1d4ed8; }
+    .badge-completed { background: #d1fae5; color: #065f46; }
+    .badge-driver    { background: #e0e7ff; color: #3730a3; }
+    .badge-passenger { background: #f3e8ff; color: #6b21a8; }
+  </style>
+</head>
+<body>
+
+  <%- include('../partials/navbar') %>
+
+  <div class="page-wrapper">
+
+    <!-- ── Page header ───────────────────────────────────────────────── -->
+    <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div>
+        <h1>Platform Statistics</h1>
+        <p>Live overview of platform activity, users, rides, bookings, and revenue.</p>
+      </div>
+      <a href="/admin/dashboard" class="btn btn-secondary btn-sm">← Admin Panel</a>
+    </div>
+
+    <!-- ── Summary stat cards ────────────────────────────────────────── -->
+    <div class="stats-grid" style="grid-template-columns:repeat(5,1fr);margin-bottom:28px">
+
+      <div class="stat-card">
+        <div class="stat-label">Total Users</div>
+        <div class="stat-value"><%= Number(users.total) || 0 %></div>
+        <div style="font-size:0.73rem;color:var(--gray-400);margin-top:5px">
+          <%= Number(users.drivers) || 0 %> drivers &middot; <%= Number(users.passengers) || 0 %> passengers
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">Total Rides</div>
+        <div class="stat-value"><%= Number(rides.total) || 0 %></div>
+        <div style="font-size:0.73rem;color:var(--gray-400);margin-top:5px">
+          <%= Number(rides.active) || 0 %> active &middot; <%= Number(rides.completed) || 0 %> done
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">Total Bookings</div>
+        <div class="stat-value"><%= Number(bookings.total) || 0 %></div>
+        <div style="font-size:0.73rem;color:var(--gray-400);margin-top:5px">
+          <%= Number(bookings.confirmed) || 0 %> confirmed &middot; <%= Number(bookings.pending) || 0 %> pending
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">Revenue (Rs.)</div>
+        <div class="stat-value green">
+          <%= Number(payments.revenue || 0).toLocaleString('en-PK') %>
+        </div>
+        <div style="font-size:0.73rem;color:var(--gray-400);margin-top:5px">
+          from <%= Number(payments.completed) || 0 %> payments
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">Avg Rating</div>
+        <div class="stat-value yellow" style="font-size:1.75rem">
+          <%= reviews.avgRating != null ? Number(reviews.avgRating).toFixed(1) : '—' %>
+        </div>
+        <div style="font-size:0.73rem;color:var(--gray-400);margin-top:5px">
+          from <%= Number(reviews.total) || 0 %> reviews
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── Breakdown cards ───────────────────────────────────────────── -->
+    <%
+      var totalU = Math.max(Number(users.total) || 0, 1);
+      var totalR = Math.max(Number(rides.total) || 0, 1);
+      var totalB = Math.max(Number(bookings.total) || 0, 1);
+
+      var driversN    = Number(users.drivers)     || 0;
+      var passengersN = Number(users.passengers)  || 0;
+      var activeN     = Number(rides.active)      || 0;
+      var completedRN = Number(rides.completed)   || 0;
+      var cancelledRN = Number(rides.cancelled)   || 0;
+      var confirmedN  = Number(bookings.confirmed)|| 0;
+      var completedBN = Number(bookings.completed)|| 0;
+      var pendingBN   = Number(bookings.pending)  || 0;
+      var cancelledBN = Number(bookings.cancelled)|| 0;
+    %>
+    <div class="breakdown-grid">
+
+      <!-- Users -->
+      <div class="breakdown-card">
+        <div class="breakdown-head">Users Breakdown</div>
+
+        <div class="brow">
+          <span class="brow-label">Drivers</span>
+          <span><span class="brow-val"><%= driversN %></span><span class="brow-pct"><%= Math.round(driversN/totalU*100) %>%</span></span>
+        </div>
+        <div class="bar-wrap"><div class="bar bar-blue" style="width:<%= Math.round(driversN/totalU*100) %>%"></div></div>
+
+        <div class="brow">
+          <span class="brow-label">Passengers</span>
+          <span><span class="brow-val"><%= passengersN %></span><span class="brow-pct"><%= Math.round(passengersN/totalU*100) %>%</span></span>
+        </div>
+        <div class="bar-wrap" style="margin-bottom:0"><div class="bar bar-purple" style="width:<%= Math.round(passengersN/totalU*100) %>%"></div></div>
+      </div>
+
+      <!-- Rides -->
+      <div class="breakdown-card">
+        <div class="breakdown-head">Rides Breakdown</div>
+
+        <div class="brow">
+          <span class="brow-label">Active</span>
+          <span><span class="brow-val"><%= activeN %></span><span class="brow-pct"><%= Math.round(activeN/totalR*100) %>%</span></span>
+        </div>
+        <div class="bar-wrap"><div class="bar bar-blue" style="width:<%= Math.round(activeN/totalR*100) %>%"></div></div>
+
+        <div class="brow">
+          <span class="brow-label">Completed</span>
+          <span><span class="brow-val"><%= completedRN %></span><span class="brow-pct"><%= Math.round(completedRN/totalR*100) %>%</span></span>
+        </div>
+        <div class="bar-wrap"><div class="bar bar-green" style="width:<%= Math.round(completedRN/totalR*100) %>%"></div></div>
+
+        <div class="brow">
+          <span class="brow-label">Cancelled</span>
+          <span><span class="brow-val"><%= cancelledRN %></span><span class="brow-pct"><%= Math.round(cancelledRN/totalR*100) %>%</span></span>
+        </div>
+        <div class="bar-wrap" style="margin-bottom:0"><div class="bar bar-red" style="width:<%= Math.round(cancelledRN/totalR*100) %>%"></div></div>
+      </div>
+
+      <!-- Bookings -->
+      <div class="breakdown-card">
+        <div class="breakdown-head">Bookings Breakdown</div>
+
+        <div class="brow">
+          <span class="brow-label">Confirmed</span>
+          <span><span class="brow-val"><%= confirmedN %></span><span class="brow-pct"><%= Math.round(confirmedN/totalB*100) %>%</span></span>
+        </div>
+        <div class="bar-wrap"><div class="bar bar-blue" style="width:<%= Math.round(confirmedN/totalB*100) %>%"></div></div>
+
+        <div class="brow">
+          <span class="brow-label">Completed</span>
+          <span><span class="brow-val"><%= completedBN %></span><span class="brow-pct"><%= Math.round(completedBN/totalB*100) %>%</span></span>
+        </div>
+        <div class="bar-wrap"><div class="bar bar-green" style="width:<%= Math.round(completedBN/totalB*100) %>%"></div></div>
+
+        <div class="brow">
+          <span class="brow-label">Pending</span>
+          <span><span class="brow-val"><%= pendingBN %></span><span class="brow-pct"><%= Math.round(pendingBN/totalB*100) %>%</span></span>
+        </div>
+        <div class="bar-wrap"><div class="bar bar-yellow" style="width:<%= Math.round(pendingBN/totalB*100) %>%"></div></div>
+
+        <div class="brow">
+          <span class="brow-label">Cancelled</span>
+          <span><span class="brow-val"><%= cancelledBN %></span><span class="brow-pct"><%= Math.round(cancelledBN/totalB*100) %>%</span></span>
+        </div>
+        <div class="bar-wrap" style="margin-bottom:0"><div class="bar bar-red" style="width:<%= Math.round(cancelledBN/totalB*100) %>%"></div></div>
+      </div>
+
+    </div>
+
+    <!-- ── Revenue + Rating row ──────────────────────────────────────── -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px">
+
+      <div class="revenue-card">
+        <div class="stat-label">Total Revenue</div>
+        <div class="revenue-val">Rs. <%= Number(payments.revenue || 0).toLocaleString('en-PK') %></div>
+        <div class="revenue-sub">
+          <%= Number(payments.completed) || 0 %> completed &middot;
+          <%= Number(payments.pending)   || 0 %> pending &middot;
+          <%= Number(payments.failed)    || 0 %> failed
+          &mdash; <%= Number(payments.total) || 0 %> total payments
+        </div>
+      </div>
+
+      <div class="breakdown-card" style="display:flex;flex-direction:column;justify-content:center">
+        <div class="breakdown-head">Average Rating</div>
+        <% var avg = reviews.avgRating != null ? Number(reviews.avgRating) : null; %>
+        <% if (avg != null) { %>
+          <div class="rating-display">
+            <span class="rating-num"><%= avg.toFixed(1) %></span>
+            <span class="rating-max">/ 5</span>
+          </div>
+          <div class="stars">
+            <% for (var s = 1; s <= 5; s++) { %>
+              <span class="star <%= s <= Math.round(avg) ? 'filled' : '' %>">&#9733;</span>
+            <% } %>
+          </div>
+          <div style="font-size:0.78rem;color:var(--gray-400);margin-top:8px">
+            Based on <%= Number(reviews.total) || 0 %> review<%= reviews.total !== 1 ? 's' : '' %>
+          </div>
+        <% } else { %>
+          <div style="font-size:1.4rem;font-weight:700;color:var(--gray-300)">No reviews yet</div>
+        <% } %>
+      </div>
+
+    </div>
+
+    <!-- ── Recent records ────────────────────────────────────────────── -->
+    <div class="tables-grid">
+
+      <!-- Recent 5 Bookings -->
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="card-header">
+          <h2>Recent Bookings</h2>
+          <span style="font-size:0.78rem;color:var(--gray-400)">Last 5</span>
+        </div>
+        <% if (recentBookings.length === 0) { %>
+          <div class="empty-state" style="padding:36px 20px">
+            <p style="color:var(--gray-400);font-size:0.875rem">No bookings yet.</p>
+          </div>
+        <% } else { %>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Passenger</th>
+                  <th>Route</th>
+                  <th>Status</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% recentBookings.forEach(function(b) { %>
+                  <tr>
+                    <td>
+                      <div style="font-weight:600;font-size:0.85rem;color:var(--gray-900)"><%= b.PassengerName %></div>
+                      <div style="font-size:0.73rem;color:var(--gray-400)">Driver: <%= b.DriverName %></div>
+                    </td>
+                    <td style="font-size:0.82rem;color:var(--gray-700);white-space:nowrap">
+                      <%= b.Origin %> &rarr; <%= b.Destination %>
+                    </td>
+                    <td><span class="badge badge-<%= b.Status %>"><%= b.Status %></span></td>
+                    <td style="font-size:0.78rem;color:var(--gray-500);white-space:nowrap">
+                      <%= new Date(b.BookingTime).toLocaleDateString('en-PK', { dateStyle: 'medium' }) %>
+                    </td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+
+      <!-- Recent 5 Users -->
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="card-header">
+          <h2>Recent Users</h2>
+          <span style="font-size:0.78rem;color:var(--gray-400)">Last 5</span>
+        </div>
+        <% if (recentUsers.length === 0) { %>
+          <div class="empty-state" style="padding:36px 20px">
+            <p style="color:var(--gray-400);font-size:0.875rem">No users yet.</p>
+          </div>
+        <% } else { %>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Joined</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% recentUsers.forEach(function(u) { %>
+                  <tr>
+                    <td style="font-weight:600;font-size:0.875rem;color:var(--gray-900)"><%= u.Name %></td>
+                    <td style="font-size:0.82rem;color:var(--gray-600)"><%= u.Email %></td>
+                    <td>
+                      <span class="badge badge-<%= u.Role %>" style="font-size:0.72rem;text-transform:capitalize">
+                        <%= u.Role %>
+                      </span>
+                    </td>
+                    <td style="font-size:0.78rem;color:var(--gray-500);white-space:nowrap">
+                      <% if (u.CreatedAt) { %>
+                        <%= new Date(u.CreatedAt).toLocaleDateString('en-PK', { dateStyle: 'medium' }) %>
+                      <% } else { %>
+                        —
+                      <% } %>
+                    </td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>
