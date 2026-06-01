@@ -35,7 +35,7 @@ router.post('/', requireRole('passenger'), async (req, res) => {
   try {
     // Verify passenger completed this ride
     const [bookings] = await db.query(
-      "SELECT b.BookingID, r.DriverID FROM BOOKINGS b JOIN RIDES r ON b.RideID = r.RideID WHERE b.RideID = ? AND b.PassengerID = ? AND b.Status = 'confirmed'",
+      "SELECT b.BookingID, r.DriverID FROM BOOKINGS b JOIN RIDES r ON b.RideID = r.RideID WHERE b.RideID = ? AND b.PassengerID = ? AND b.Status = 'completed'",
       [rideId, passengerId]
     );
     if (bookings.length === 0) {

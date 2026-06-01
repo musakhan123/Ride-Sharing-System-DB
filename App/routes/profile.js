@@ -15,6 +15,7 @@ router.get('/', requireLogin, async (req, res) => {
     );
     if (rows.length === 0) return res.redirect('/auth/login');
 
+    await updateChecklist(userId);
     const checklist = await getOrCreateChecklist(userId);
 
     res.render('profile', {
@@ -31,8 +32,10 @@ router.get('/', requireLogin, async (req, res) => {
 
 // GET /profile/checklist — JSON
 router.get('/checklist', requireLogin, async (req, res) => {
+  const userId = req.session.user.UserID;
   try {
-    const checklist = await getOrCreateChecklist(req.session.user.UserID);
+    await updateChecklist(userId);
+    const checklist = await getOrCreateChecklist(userId);
     res.json(checklist);
   } catch (err) {
     res.status(500).json({ error: err.message });

@@ -9,7 +9,13 @@ function init(httpServer) {
 
   io.on('connection', (socket) => {
     socket.on('register', (userId) => {
-      userSockets.set(String(userId), socket.id);
+      const id = parseInt(userId, 10);
+      if (!id || id <= 0) return;
+      // Only allow registration if this socket doesn't already own a different userId
+      for (const [uid, sid] of userSockets.entries()) {
+        if (sid === socket.id && uid !== String(id)) return;
+      }
+      userSockets.set(String(id), socket.id);
     });
 
     socket.on('disconnect', () => {

@@ -127,9 +127,7 @@ router.post('/verify/:id', isAdmin, async (req, res) => {
     );
     if (ivRow.length > 0) {
       emitToUser(ivRow[0].UserID, 'verification-status-changed', { status, rejectionReason });
-      if (status === 'verified') {
-        updateChecklist(ivRow[0].UserID).catch(e => console.error('[checklist]', e.message));
-      }
+      updateChecklist(ivRow[0].UserID).catch(e => console.error('[checklist]', e.message));
     }
     res.redirect('/admin/dashboard');
   } catch (err) {
@@ -180,7 +178,7 @@ router.post('/vehicle/:id', isAdmin, async (req, res) => {
       'UPDATE VEHICLE_REGISTRATION SET Status = ? WHERE RegistrationID = ?',
       [status, id]
     );
-    if (status === 'active' && vrRow.length > 0) {
+    if (vrRow.length > 0) {
       updateChecklist(vrRow[0].DriverID).catch(e => console.error('[checklist]', e.message));
     }
     res.redirect('/admin/dashboard');

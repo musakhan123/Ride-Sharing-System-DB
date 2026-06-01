@@ -54,35 +54,6 @@ router.get('/dashboard', isPassenger, async (req, res) => {
   }
 });
 
-// ── GET /passenger/rides/search — JSON API ────────────────────────────────
-async function searchRidesHandler(req, res) {
-  const { originId, destinationId } = req.query;
-  if (!originId || !destinationId) {
-    return res.status(400).json({ error: 'originId and destinationId are required' });
-  }
-  try {
-    const [rows] = await db.query(
-      `SELECT R.*, L1.LocationName AS Origin, L2.LocationName AS Destination,
-              U.Name AS DriverName, U.Phone AS DriverPhone,
-              V.Make, V.Model, V.Color, V.PlateNumber
-       FROM RIDES R
-       JOIN LOCATIONS L1 ON R.OriginID = L1.LocationID
-       JOIN LOCATIONS L2 ON R.DestinationID = L2.LocationID
-       JOIN USERS U ON R.DriverID = U.UserID
-       JOIN VEHICLES V ON R.VehicleID = V.VehicleID
-       WHERE R.OriginID = ? AND R.DestinationID = ?
-         AND R.Status = 'active' AND R.AvailableSeats > 0
-       ORDER BY R.DepartureTime ASC`,
-      [originId, destinationId]
-    );
-    res.json(rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-}
-
-router.get('/rides/search', isPassenger, searchRidesHandler);
-
 // ── GET /passenger/search-rides — primary AJAX search endpoint ────────────
 router.get('/search-rides', isPassenger, async (req, res) => {
   const { originID, destinationID } = req.query;
@@ -314,10 +285,15 @@ router.post('/payment/:bookingID', isPassenger, async (req, res) => {
 
   try {
     const [bookingRows] = await db.query(
-      "SELECT BookingID FROM BOOKINGS WHERE BookingID = ? AND PassengerID = ? AND Status = 'confirmed'",
+      "SELECT BookingID, ProposedFare FROM BOOKINGS WHERE BookingID = ? AND PassengerID = ? AND Status = 'confirmed'",
       [bookingId, passengerId]
     );
     if (bookingRows.length === 0) return res.redirect('/passenger/dashboard');
+
+    const agreedFare = parseFloat(bookingRows[0].ProposedFare);
+    if (!isNaN(agreedFare) && Math.abs(parsedAmount - agreedFare) > 0.01) {
+      return res.redirect(`/passenger/payment/${bookingId}?error=amount_mismatch`);
+    }
 
     const [existingPayment] = await db.query(
       "SELECT PaymentID FROM PAYMENTS WHERE BookingID = ? AND Status = 'completed'",
@@ -428,6 +404,7 @@ router.post('/cancel-booking/:bookingID', isPassenger, async (req, res) => {
         [bookingId]
       );
       await conn.commit();
+      updateChecklist(passengerId).catch(e => console.error('[checklist]', e.message));
       res.redirect('/passenger/my-bookings?cancelled=1');
     } catch (err) {
       await conn.rollback();
@@ -517,95 +494,5 @@ router.get('/reviews', isPassenger, async (req, res) => {
   }
 });
 
-// ── Legacy JSON API routes ────────────────────────────────────────────────
-
-router.post('/rides/:id/book', isPassenger, async (req, res) => {
-  const rideId      = req.params.id;
-  const passengerId = req.session.user.UserID;
-  try {
-    const [rides] = await db.query(
-      "SELECT * FROM RIDES WHERE RideID = ? AND Status = 'active' AND AvailableSeats > 0",
-      [rideId]
-    );
-    if (rides.length === 0) return res.status(404).json({ error: 'Ride not available' });
-
-    const [existing] = await db.query(
-      "SELECT BookingID FROM BOOKINGS WHERE RideID = ? AND PassengerID = ? AND Status IN ('pending','confirmed')",
-      [rideId, passengerId]
-    );
-    if (existing.length > 0) return res.status(409).json({ error: 'Already booked this ride' });
-
-    const conn = await db.getConnection();
-    try {
-      await conn.beginTransaction();
-      const [booking] = await conn.query(
-        "INSERT INTO BOOKINGS (RideID, PassengerID, BookingTime, Status) VALUES (?, ?, NOW(), 'confirmed')",
-        [rideId, passengerId]
-      );
-      await conn.query('UPDATE RIDES SET AvailableSeats = AvailableSeats - 1 WHERE RideID = ?', [rideId]);
-      await conn.commit();
-      res.status(201).json({ message: 'Ride booked successfully', bookingId: booking.insertId });
-    } catch (err) {
-      await conn.rollback();
-      throw err;
-    } finally {
-      conn.release();
-    }
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-router.get('/bookings', isPassenger, async (req, res) => {
-  const passengerId = req.session.user.UserID;
-  try {
-    const [rows] = await db.query(
-      `SELECT b.BookingID, b.BookingTime, b.Status AS BookingStatus,
-              r.DepartureTime, r.Status AS RideStatus,
-              o.LocationName AS Origin, d.LocationName AS Destination,
-              u.Name AS DriverName, u.Phone AS DriverPhone,
-              v.Make, v.Model, v.PlateNumber
-       FROM BOOKINGS b
-       JOIN RIDES r ON b.RideID = r.RideID
-       JOIN LOCATIONS o ON r.OriginID = o.LocationID
-       JOIN LOCATIONS d ON r.DestinationID = d.LocationID
-       JOIN USERS u ON r.DriverID = u.UserID
-       JOIN VEHICLES v ON r.VehicleID = v.VehicleID
-       WHERE b.PassengerID = ? ORDER BY b.BookingTime DESC`,
-      [passengerId]
-    );
-    res.json(rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-router.post('/bookings/:id/cancel', isPassenger, async (req, res) => {
-  const bookingId   = req.params.id;
-  const passengerId = req.session.user.UserID;
-  try {
-    const [bookings] = await db.query(
-      "SELECT * FROM BOOKINGS WHERE BookingID = ? AND PassengerID = ? AND Status = 'confirmed'",
-      [bookingId, passengerId]
-    );
-    if (bookings.length === 0) return res.status(404).json({ error: 'Active booking not found' });
-
-    const conn = await db.getConnection();
-    try {
-      await conn.beginTransaction();
-      await conn.query("UPDATE BOOKINGS SET Status = 'cancelled' WHERE BookingID = ?", [bookingId]);
-      await conn.query('UPDATE RIDES SET AvailableSeats = AvailableSeats + 1 WHERE RideID = ?', [bookings[0].RideID]);
-      await conn.commit();
-      res.json({ message: 'Booking cancelled' });
-    } catch (err) {
-      await conn.rollback();
-      throw err;
-    } finally {
-      conn.release();
-    }
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
 
 module.exports = router;

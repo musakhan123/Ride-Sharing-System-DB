@@ -18,9 +18,14 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+const SESSION_SECRET = process.env.SESSION_SECRET || 'ride-sharing-secret-key';
+if (!process.env.SESSION_SECRET) {
+  console.warn('[WARN] SESSION_SECRET env var not set — using insecure default. Set it in production.');
+}
+
 app.use(session({
-  secret: 'ride-sharing-secret-key',
-  resave: true,
+  secret: SESSION_SECRET,
+  resave: false,
   saveUninitialized: false,
   rolling: true,
   cookie: {
