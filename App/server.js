@@ -1,10 +1,13 @@
+const http    = require('http');
 const express = require('express');
 const session = require('express-session');
-const path = require('path');
-const db = require('./config/db');
+const path    = require('path');
+const db      = require('./config/db');
+const { init: initSocket } = require('./config/socket');
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+const app    = express();
+const server = http.createServer(app);
+const PORT   = process.env.PORT || 3000;
 
 // View engine
 app.set('view engine', 'ejs');
@@ -17,31 +20,64 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(session({
   secret: 'ride-sharing-secret-key',
-  resave: false,
+  resave: true,
   saveUninitialized: false,
-  cookie: { secure: false }
+  rolling: true,
+  cookie: {
+    secure: false,
+    maxAge: 24 * 60 * 60 * 1000   // 24 hours
+  }
 }));
 
-// Routes
-const indexRouter = require('./routes/index');
-const authRouter = require('./routes/auth');
-const driverRouter = require('./routes/driver');
-const passengerRouter = require('./routes/passenger');
-const reviewsRouter = require('./routes/reviews');
-const adminRouter = require('./routes/admin');
+// Socket.io
+initSocket(server);
 
-app.use('/', indexRouter);
-app.use('/auth', authRouter);
-app.use('/driver', driverRouter);
+// Health check
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
+
+// Routes
+const indexRouter     = require('./routes/index');
+const authRouter      = require('./routes/auth');
+const driverRouter    = require('./routes/driver');
+const passengerRouter = require('./routes/passenger');
+const reviewsRouter   = require('./routes/reviews');
+const adminRouter     = require('./routes/admin');
+const profileRouter   = require('./routes/profile');
+
+app.use('/',          indexRouter);
+app.use('/admin',     adminRouter);
+app.use('/auth',      authRouter);
+app.use('/driver',    driverRouter);
 app.use('/passenger', passengerRouter);
-app.use('/reviews', reviewsRouter);
-app.use('/admin', adminRouter);
+app.use('/reviews',   reviewsRouter);
+app.use('/profile',   profileRouter);
+
+// Express error handling middleware
+app.use((err, req, res, next) => {
+  console.error('[Express Error]', err.stack || err.message);
+  const status = err.status || err.statusCode || 500;
+  if (req.accepts('html')) {
+    return res.status(status).send(
+      `<h2>Something went wrong</h2><p>${err.message || 'Internal server error'}</p>`
+    );
+  }
+  res.status(status).json({ error: err.message || 'Internal server error' });
+});
+
+// Keep the process alive on unexpected errors
+process.on('uncaughtException', (err) => {
+  console.error('[uncaughtException]', err.stack || err.message);
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('[unhandledRejection]', reason instanceof Error ? reason.stack : reason);
+});
 
 db.getConnection()
   .then(conn => {
     console.log('MySQL connected successfully');
     conn.release();
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
     });
   })
